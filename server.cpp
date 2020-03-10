@@ -26,6 +26,7 @@ void server(int p1[], int p2[])
 	
 	cm* first_client_message;
 
+	ii* test_input_info = new ii{};
 
 	int m, r;
 	int open[2] = {1,1}; /* keep a flag for if pipe is still open */
@@ -60,14 +61,19 @@ void server(int p1[], int p2[])
 				//printf("Buffer form child 1: %d %d \n", buf[0], buf[1] );
 				printf("Struct form child 1: %d %d \n", first_client_message->message_id, first_client_message->params.delay);
 
-				ii test_input_info;
-				test_input_info = {1, 9999, 0};
-				//test_input_info->type = 1;//first_client_message->message_id;
-				//test_input_info->pid = 9999;
-				//test_input_info->info = first_client_message->params;
+				
+				//*test_input_info = {1, 9999, first_client_message->params};
+				test_input_info->type = first_client_message->message_id;
+				test_input_info->pid = getpid();;
+				test_input_info->info = first_client_message->params;
+				
+				pid_t pid = getpid();
 
-				//print_input(test_input_info, 0); // 0 will be replaced by the client id assigned to the bidder
+  				//printf("pid: %d \n", pid);
 
+
+				print_input(test_input_info, 0); // 0 will be replaced by the client id assigned to the bidder
+				
 
 			}
 

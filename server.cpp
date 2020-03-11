@@ -32,13 +32,14 @@ void server(int p1[], int p2[], int pid1, int pid2)
 	int m, r;
 	int open[2] = {1,1}; /* keep a flag for if pipe is still open */
 
-	close(p1[1]); /* close unused ends */
-	close(p2[1]);
+	//close(p1[1]); /* close unused ends */
+	//close(p2[1]);
 
 	m = ((p1[0] > p2[0]) ? p1[0] : p2[0]) + 1; /* maximum of file descriptors */
 	
 	printf("CONTROL\n");
 
+	cei* test_connection_established_info = new cei{};
 
 
 	while (open[0] || open[1]) {
@@ -56,7 +57,8 @@ void server(int p1[], int p2[], int pid1, int pid2)
 			
 			//r = read(p1[0], buf, 8);
 			cm* first_client_message;
-			
+
+
 			r = read(p1[0], first_client_message, sizeof(cm));
 			
 			if (r == 0)  	/* EOF */
@@ -83,7 +85,21 @@ void server(int p1[], int p2[], int pid1, int pid2)
 
 
 				print_input(test_input_info, 0); // 0 will be replaced by the client id assigned to the bidder
+					
+
+				//cei test_connection_established_info ;//= {0,0,0,5};
+
 				
+				test_connection_established_info->client_id = 0; 
+				test_connection_established_info->starting_bid = 0;
+				test_connection_established_info->current_bid = 0;
+				test_connection_established_info->minimum_increment = 5;
+				/*
+				*/
+
+				write(p1[1],test_connection_established_info,sizeof(cei));
+
+
 
 			}
 
@@ -123,6 +139,9 @@ void server(int p1[], int p2[], int pid1, int pid2)
 
 
 				print_input(test_input_info2, 1); // 0 will be replaced by the client id assigned to the bidder
+
+				//cei test;
+
 			}
 		}
 
@@ -218,6 +237,7 @@ int main()
   				//close(pid1[1]);
 				
 				dup2(fd1[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
+				dup2(STDIN_FILENO , fd1[0]) ; //
 
 
 				execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args);

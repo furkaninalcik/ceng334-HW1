@@ -17,16 +17,17 @@ extern int errno;
 
 //////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////onursehitoglu//////////////////////////////////
-void server(int p1[], int p2[])
+void server(int p1[], int p2[], int pid1, int pid2)
 {
 	fd_set readset;
 	char mess[40];
 
     int buf[8];
 	
-	cm* first_client_message;
+	
 
 	ii* test_input_info = new ii{};
+	ii* test_input_info2 = new ii{};
 
 	int m, r;
 	int open[2] = {1,1}; /* keep a flag for if pipe is still open */
@@ -39,11 +40,13 @@ void server(int p1[], int p2[])
 	printf("CONTROL\n");
 
 
+
 	while (open[0] || open[1]) {
 		/* following initializes a blocking set for select() */
 		FD_ZERO(&readset);
 		if (open[0]) FD_SET(p1[0],&readset);
 		if (open[1]) FD_SET(p2[0],&readset);
+
 
 		/* the following code will block until any of them have data to read */
 		select(m, &readset, NULL,NULL,NULL);  /* no wset, eset, timeout */
@@ -52,6 +55,7 @@ void server(int p1[], int p2[])
 		if (FD_ISSET(p1[0], &readset)) {  /* check if first pipe is in readset */
 			
 			//r = read(p1[0], buf, 8);
+			cm* first_client_message;
 			
 			r = read(p1[0], first_client_message, sizeof(cm));
 			
@@ -59,17 +63,23 @@ void server(int p1[], int p2[])
 				open[0] = 0;
 			else{
 				//printf("Buffer form child 1: %d %d \n", buf[0], buf[1] );
+
+
+
 				printf("Struct form child 1: %d %d \n", first_client_message->message_id, first_client_message->params.delay);
 
-				
-				//*test_input_info = {1, 9999, first_client_message->params};
+				//pid_t* process_id_1;
+
+				//read(pid1[0], process_id_1, sizeof(pid_t));
+
+
 				test_input_info->type = first_client_message->message_id;
-				test_input_info->pid = getpid();;
+				test_input_info->pid = pid1;//*process_id_1;
 				test_input_info->info = first_client_message->params;
 				
 				pid_t pid = getpid();
 
-  				//printf("pid: %d \n", pid);
+  				printf("PID 01: %d \n", pid);
 
 
 				print_input(test_input_info, 0); // 0 will be replaced by the client id assigned to the bidder
@@ -79,14 +89,40 @@ void server(int p1[], int p2[])
 
 		}
 
+
+
 		/* following if is not in else since both may have data to read */
 		if (FD_ISSET(p2[0], &readset)) {  /* check if second pipe is in readset */
-			r = read(p2[0], buf, 8);
+
+			cm* first_client_message;
+
+			r = read(p2[0], first_client_message, sizeof(cm));
+			//r = read(p2[0], buf, 8);
+
+
+			int test;
+
+		
 			if ( r == 0 )  /* EOF */
 				open[1] = 0;
 			else{
-				printf("Buffer from child 2: %d %d \n", buf[0], buf[1] );
 
+
+				printf("Struct form child 2: %d %d \n", first_client_message->message_id, first_client_message->params.delay);
+
+
+				
+				//*test_input_info = {1, 9999, first_client_message->params};
+				test_input_info2->type = first_client_message->message_id;
+				test_input_info2->pid  = pid2;
+				test_input_info2->info = first_client_message->params;
+				
+				pid_t pid = getpid();
+
+  				printf("PID 02: %d \n", pid);
+
+
+				print_input(test_input_info2, 1); // 0 will be replaced by the client id assigned to the bidder
 			}
 		}
 
@@ -134,22 +170,32 @@ int main()
 	int pipe1 = PIPE(fd1); //socket creation 1
 	int pipe2 = PIPE(fd2); //socket creation 2
 
+	int pid1[2];
+	int pid2[2];
+	
+	int pipe3 = PIPE(pid1); //socket creation for pid1 (process id for child process 1)
+	int pipe4 = PIPE(pid2); //socket creation for pid2 (process id for child process 2)
 
 	int file_desc_1 = open("child_1_output.txt",O_WRONLY | O_APPEND); 
 
 	int file_desc_2 = open("child_2_output.txt",O_WRONLY | O_APPEND); 
 
-	if (pipe1 == 0 && pipe2 == 0)
+	if (pipe1 == 0 && pipe2 == 0 && pipe3 == 0 && pipe4 == 0)
 	{
 		printf("Socket Pair is succesfully created.\n");
 
 		int w; // parameter for wait()
 
-		if (fork()) {
-			if (fork())
+		int fork_return1, fork_return2;
+
+		if (fork_return2 = fork()) {
+			if (fork_return1 = fork())
 			{
 				printf("PARENT\n");  /* Parent process */
-				server(fd1,fd2);
+				printf(" FORK RETURNS: %d %d \n", fork_return1, fork_return2 );
+
+				server(fd1,fd2,fork_return1,fork_return2);
+				
 				wait(&w);
 				wait(&w);
 			}else{												/* Child process 1*/
@@ -157,18 +203,19 @@ int main()
 
 				char *args[3];
 				args[0] = "Bidder";  /* Convention! Not required!! */
-				args[1] = "2789";
+				args[1] = "1111";
 				args[2] = NULL;
 
+				pid_t pid = getpid();
 
+  				printf("PID 1: %d \n", pid);
   
 
 				//dup2(file_desc, STDOUT_FILENO) ; //  STDOUT_FILENO = 1
 
-				printf("file_desc_1: %d\n", file_desc_1);
-				printf("file_desc_2: %d\n", file_desc_2);
-				printf("fd1: %d\n", fd1[0]);
-				printf("fd2: %d\n", fd1[1]);
+  				//write(pid1[1],&pid,2);
+
+  				//close(pid1[1]);
 				
 				dup2(fd1[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
 
@@ -183,10 +230,19 @@ int main()
 			printf("Child process: Bidder 2\n");
 			char *args[3];
 			args[0] = "Bidder";  /* Convention! Not required!! */
-			args[1] = "1468";
+			args[1] = "2222";
 			args[2] = NULL; 
 
 			//dup2(file_desc_2, STDOUT_FILENO) ; //  STDOUT_FILENO = 1
+
+			pid_t pid = getpid();
+
+			printf("PID 2: %d \n", pid);
+
+			//write(pid2[1],&pid,2);
+
+			//close(pid2[1]);
+
 
 			dup2(fd2[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
 

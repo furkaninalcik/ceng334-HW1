@@ -17,7 +17,7 @@ extern int errno;
 
 //////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////onursehitoglu//////////////////////////////////
-void server(int p1[], int p2[], int pid1, int pid2)
+void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 {
 	fd_set readset;
 	char mess[40];
@@ -116,9 +116,8 @@ void server(int p1[], int p2[], int pid1, int pid2)
 				test_server_message->message_id = 0;
 				test_server_message->params = test_output_info->info;
 
-				write(p1[0],test_server_message,sizeof(sm));
-				//write(p1[1],"first_client_message",sizeof(cm));
-
+				write(out_fd1[0],test_server_message,sizeof(sm));
+				close(out_fd1[0]);
 
 
 			}
@@ -205,15 +204,14 @@ int main()
 
 	int fd1[2];
 	int fd2[2];
+	int out_fd1[2];
+	int out_fd2[2];
 	
 	int pipe1 = PIPE(fd1); //socket creation 1
 	int pipe2 = PIPE(fd2); //socket creation 2
+	int pipe3 = PIPE(out_fd1); //socket creation 3
+	int pipe4 = PIPE(out_fd2); //socket creation 4
 
-	int pid1[2];
-	int pid2[2];
-	
-	int pipe3 = PIPE(pid1); //socket creation for pid1 (process id for child process 1)
-	int pipe4 = PIPE(pid2); //socket creation for pid2 (process id for child process 2)
 
 	int file_desc_1 = open("child_1_output.txt",O_WRONLY | O_APPEND); 
 
@@ -241,10 +239,12 @@ int main()
 				write(fd1[1],"\ntest1\n\n",8);
 				*/
 
-				//int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
-				//dup2(file_desc_test  , fd1[0]) ; //
+				close(out_fd1[1]);
 
-				server(fd1,fd2,fork_return1,fork_return2);
+				//int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
+				//dup2(file_desc_test  , out_fd1[0]) ; //
+
+				server(fd1,fd2,fork_return1,fork_return2, out_fd1);
 
 
 
@@ -267,19 +267,26 @@ int main()
 
   				//write(pid1[1],&pid,2);
 
-  				//close(pid1[1]);
+  				close(out_fd1[0]);
 
 				int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
   				//close(fd1[0]);
 
-				printf("STDOUT_FILENO: %d\n", STDOUT_FILENO);
+				printf("STDOUT_FILENO: %d\n\n", STDOUT_FILENO);
 				
 				dup2(fd1[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
-				dup2(STDIN_FILENO, fd1[1] ) ; //
-				//dup2(file_desc_test  , fd1[1]) ; //
+				//dup2(STDIN_FILENO, fd1[1] ) ; //
+				//close(out_fd1[0]);
 
+				dup2(file_desc_test, out_fd1[1]) ; //
+
+
+				//close(out_fd1[1]);
 				//write(fd1[1],"\ntest1\n\n",8);
 
+				//const char* input_to_child = "0000 0000 0000 0000 0000 0000 0000 0000 0500 0000";
+				//char* input_to_child;
+				//scanf("%s", &input_to_child);
 
 
 				execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args);

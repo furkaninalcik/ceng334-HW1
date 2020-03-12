@@ -29,6 +29,8 @@ void server(int p1[], int p2[], int pid1, int pid2)
 	ii* test_input_info = new ii{};
 	ii* test_input_info2 = new ii{};
 
+	oi* test_output_info = new oi{};
+
 	int m, r;
 	int open[2] = {1,1}; /* keep a flag for if pipe is still open */
 
@@ -41,7 +43,7 @@ void server(int p1[], int p2[], int pid1, int pid2)
 
 	cei* test_connection_established_info = new cei{};
 
-	
+	sm* test_server_message = new sm{};
 
 
 
@@ -73,7 +75,9 @@ void server(int p1[], int p2[], int pid1, int pid2)
 
 				printf("Struct form child 1: %d %d \n", first_client_message->message_id, first_client_message->params.delay);
 
-				printf("FIRST CLIENT MESSAGE: %s\n", first_client_message);
+				printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.delay);
+				printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.status);
+				printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.bid);
 
 				//pid_t* process_id_1;
 
@@ -102,7 +106,17 @@ void server(int p1[], int p2[], int pid1, int pid2)
 				/*
 				*/
 
-				write(p1[0],test_connection_established_info,sizeof(cei));
+				test_output_info->type = first_client_message->message_id;
+				test_output_info->pid = pid1;//*process_id_1;
+				test_output_info->info.start_info = *test_connection_established_info;
+
+				print_output(test_output_info, 0); // 0 will be replaced by the client id assigned to the bidder
+
+
+				test_server_message->message_id = 0;
+				test_server_message->params = test_output_info->info;
+
+				write(p1[0],test_server_message,sizeof(sm));
 				//write(p1[1],"first_client_message",sizeof(cm));
 
 
@@ -258,9 +272,10 @@ int main()
 				int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
   				//close(fd1[0]);
 
+				printf("STDOUT_FILENO: %d\n", STDOUT_FILENO);
 				
 				dup2(fd1[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
-				//dup2(STDIN_FILENO , fd1[0]) ; //
+				dup2(STDIN_FILENO, fd1[1] ) ; //
 				//dup2(file_desc_test  , fd1[1]) ; //
 
 				//write(fd1[1],"\ntest1\n\n",8);
@@ -289,6 +304,8 @@ int main()
 			//write(pid2[1],&pid,2);
 
 			//close(pid2[1]);
+
+			printf("STDOUT_FILENO: %d\n", STDOUT_FILENO);
 
 
 			dup2(fd2[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1

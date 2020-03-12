@@ -259,12 +259,12 @@ int main()
 				write(fd1[1],"\ntest1\n\n",8);
 				*/
 
-				close(out_fd1[1]);
+				//close(out_fd1[1]);
 
-				dup2(file_desc_test, out_fd1[0]) ; //
+				//dup2(file_desc_test, out_fd1[0]) ; //
 				
-				write(out_fd1[0],"2222",4);
-				close(out_fd1[0]);
+				//write(out_fd1[0],"2222",4);
+				//close(out_fd1[0]);
 
 				////////////////////////////////////////
 				////////////////////////////////////////
@@ -316,10 +316,10 @@ int main()
 
 
 				
-				close(out_fd1[0]);
+				//close(out_fd1[0]);
 
-				dup2(file_desc_test  , out_fd1[1]) ; //
-				close(out_fd1[1]);
+				//dup2(file_desc_test  , out_fd1[1]) ; //
+				//close(out_fd1[1]);
 				
 				//write(out_fd1[1],"9",1);
 

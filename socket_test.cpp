@@ -37,9 +37,11 @@ main()
    else if (child) {     /* This is the parent. */
       close(sockets[0]);
 
+      //dup2(STDOUT_FILENO , sockets[1]);
 
       if (read(sockets[1], buf, 1024) < 0)
          perror("reading stream message");
+
       printf("-->%s\n", buf);
       //dup2(file_desc_1 , sockets[1]);
 
@@ -56,7 +58,9 @@ main()
    } else {     /* This is the child. */
       close(sockets[1]);
 
-      dup2(file_desc_1 , sockets[1]);
+      //dup2(file_desc_1 , sockets[0]);
+
+      //dup2(STDOUT_FILENO , sockets[0]);
 
       if (write(sockets[0], DATA1, sizeof(DATA1)) < 0)
          perror("writing stream message");

@@ -32,14 +32,17 @@ void server(int p1[], int p2[], int pid1, int pid2)
 	int m, r;
 	int open[2] = {1,1}; /* keep a flag for if pipe is still open */
 
-	//close(p1[1]); /* close unused ends */
-	//close(p2[1]);
+	close(p1[1]); /* close unused ends */
+	close(p2[1]);
 
 	m = ((p1[0] > p2[0]) ? p1[0] : p2[0]) + 1; /* maximum of file descriptors */
 	
 	printf("CONTROL\n");
 
 	cei* test_connection_established_info = new cei{};
+
+	
+
 
 
 	while (open[0] || open[1]) {
@@ -70,6 +73,8 @@ void server(int p1[], int p2[], int pid1, int pid2)
 
 				printf("Struct form child 1: %d %d \n", first_client_message->message_id, first_client_message->params.delay);
 
+				printf("FIRST CLIENT MESSAGE: %s\n", first_client_message);
+
 				//pid_t* process_id_1;
 
 				//read(pid1[0], process_id_1, sizeof(pid_t));
@@ -81,7 +86,7 @@ void server(int p1[], int p2[], int pid1, int pid2)
 				
 				pid_t pid = getpid();
 
-  				printf("PID 01: %d \n", pid);
+  				//printf("PID 01: %d \n", pid);
 
 
 				print_input(test_input_info, 0); // 0 will be replaced by the client id assigned to the bidder
@@ -97,7 +102,8 @@ void server(int p1[], int p2[], int pid1, int pid2)
 				/*
 				*/
 
-				write(p1[1],test_connection_established_info,sizeof(cei));
+				write(p1[0],test_connection_established_info,sizeof(cei));
+				//write(p1[1],"first_client_message",sizeof(cm));
 
 
 
@@ -135,7 +141,7 @@ void server(int p1[], int p2[], int pid1, int pid2)
 				
 				pid_t pid = getpid();
 
-  				printf("PID 02: %d \n", pid);
+  				//printf("PID 02: %d \n", pid);
 
 
 				print_input(test_input_info2, 1); // 0 will be replaced by the client id assigned to the bidder
@@ -210,11 +216,24 @@ int main()
 		if (fork_return2 = fork()) {
 			if (fork_return1 = fork())
 			{
-				printf("PARENT\n");  /* Parent process */
-				printf(" FORK RETURNS: %d %d \n", fork_return1, fork_return2 );
+				//printf("PARENT\n");  /* Parent process */
+				//printf(" FORK RETURNS: %d %d \n", fork_return1, fork_return2 );
+
+				/*
+				int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
+				
+				dup2(STDOUT_FILENO ,fd1[1]  ) ; //  STDOUT_FILENO = 1
+
+				write(fd1[1],"\ntest1\n\n",8);
+				*/
+
+				//int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
+				//dup2(file_desc_test  , fd1[0]) ; //
 
 				server(fd1,fd2,fork_return1,fork_return2);
-				
+
+
+
 				wait(&w);
 				wait(&w);
 			}else{												/* Child process 1*/
@@ -222,12 +241,12 @@ int main()
 
 				char *args[3];
 				args[0] = "Bidder";  /* Convention! Not required!! */
-				args[1] = "1111";
+				args[1] = "1123";
 				args[2] = NULL;
 
 				pid_t pid = getpid();
 
-  				printf("PID 1: %d \n", pid);
+  				//printf("PID 1: %d \n", pid);
   
 
 				//dup2(file_desc, STDOUT_FILENO) ; //  STDOUT_FILENO = 1
@@ -235,9 +254,17 @@ int main()
   				//write(pid1[1],&pid,2);
 
   				//close(pid1[1]);
+
+				int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
+  				//close(fd1[0]);
+
 				
 				dup2(fd1[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
-				dup2(STDIN_FILENO , fd1[0]) ; //
+				//dup2(STDIN_FILENO , fd1[0]) ; //
+				//dup2(file_desc_test  , fd1[1]) ; //
+
+				//write(fd1[1],"\ntest1\n\n",8);
+
 
 
 				execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args);
@@ -257,7 +284,7 @@ int main()
 
 			pid_t pid = getpid();
 
-			printf("PID 2: %d \n", pid);
+			//printf("PID 2: %d \n", pid);
 
 			//write(pid2[1],&pid,2);
 

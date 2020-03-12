@@ -10,8 +10,11 @@
 #include "lib/message.h"
 #include "lib/logging.h"
 
+
 extern int errno;
 
+#define DATA1 "In Xanadu, did Kublai Khan..."
+#define DATA2 "A stately pleasure dome decree..."
 
 #define PIPE(fd) socketpair(AF_UNIX, SOCK_STREAM, PF_UNIX, fd)
 
@@ -75,9 +78,9 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 
 				printf("Struct form child 1: %d %d \n", first_client_message->message_id, first_client_message->params.delay);
 
-				printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.delay);
-				printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.status);
-				printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.bid);
+				//printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.delay);
+				//printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.status);
+				//printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.bid);
 
 				//pid_t* process_id_1;
 
@@ -116,8 +119,9 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 				test_server_message->message_id = 0;
 				test_server_message->params = test_output_info->info;
 
-				write(out_fd1[0],test_server_message,sizeof(sm));
-				close(out_fd1[0]);
+				//write(out_fd1[0],test_server_message,sizeof(sm));
+				//write(out_fd1[0],"1111",4);
+				//close(out_fd1[0]);
 
 
 			}
@@ -217,6 +221,22 @@ int main()
 
 	int file_desc_2 = open("child_2_output.txt",O_WRONLY | O_APPEND); 
 
+	int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
+
+	////////////////////////////////////////
+	///////////////////////////////////////
+	
+	int sockets[2], child;
+   	char buf[1024];
+   	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNIX, sockets) < 0) {
+    	perror("opening stream socket pair");
+    	exit(1);
+   	}
+	////////////////////////////////////////
+	////////////////////////////////////////
+	
+
+
 	if (pipe1 == 0 && pipe2 == 0 && pipe3 == 0 && pipe4 == 0)
 	{
 		printf("Socket Pair is succesfully created.\n");
@@ -241,8 +261,28 @@ int main()
 
 				close(out_fd1[1]);
 
-				//int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
+				dup2(file_desc_test, out_fd1[0]) ; //
+				
+				write(out_fd1[0],"2222",4);
+				close(out_fd1[0]);
+
+				////////////////////////////////////////
+				////////////////////////////////////////
+				
+				//close(sockets[0]);
+				//if (read(sockets[1], buf, 1024) < 0)
+				//	perror("reading stream message");
+				//printf("-->%s\n", buf);
+				//if (write(sockets[1], DATA2, sizeof(DATA2)) < 0)
+				//	perror("writing stream message");
+				//close(sockets[1]);
+				///////////////////////////////////////
+				////////////////////////////////////////
+
+
 				//dup2(file_desc_test  , out_fd1[0]) ; //
+
+
 
 				server(fd1,fd2,fork_return1,fork_return2, out_fd1);
 
@@ -258,19 +298,8 @@ int main()
 				args[1] = "1123";
 				args[2] = NULL;
 
-				pid_t pid = getpid();
 
-  				//printf("PID 1: %d \n", pid);
-  
-
-				//dup2(file_desc, STDOUT_FILENO) ; //  STDOUT_FILENO = 1
-
-  				//write(pid1[1],&pid,2);
-
-  				close(out_fd1[0]);
-
-				int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
-  				//close(fd1[0]);
+  				//close(out_fd1[0]);
 
 				printf("STDOUT_FILENO: %d\n\n", STDOUT_FILENO);
 				
@@ -278,10 +307,26 @@ int main()
 				//dup2(STDIN_FILENO, fd1[1] ) ; //
 				//close(out_fd1[0]);
 
-				dup2(file_desc_test, out_fd1[1]) ; //
 
 
-				//close(out_fd1[1]);
+				//if (read(out_fd1[1], buf, 1024) < 0)
+				//	perror("reading stream message");
+				//printf("-->%s\n", buf);
+
+
+
+				
+				close(out_fd1[0]);
+
+				dup2(file_desc_test  , out_fd1[1]) ; //
+				close(out_fd1[1]);
+				
+				//write(out_fd1[1],"9",1);
+
+
+				execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args);
+
+
 				//write(fd1[1],"\ntest1\n\n",8);
 
 				//const char* input_to_child = "0000 0000 0000 0000 0000 0000 0000 0000 0500 0000";
@@ -289,7 +334,6 @@ int main()
 				//scanf("%s", &input_to_child);
 
 
-				execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args);
 				
 
 
@@ -304,18 +348,27 @@ int main()
 
 			//dup2(file_desc_2, STDOUT_FILENO) ; //  STDOUT_FILENO = 1
 
-			pid_t pid = getpid();
-
-			//printf("PID 2: %d \n", pid);
-
-			//write(pid2[1],&pid,2);
-
-			//close(pid2[1]);
 
 			printf("STDOUT_FILENO: %d\n", STDOUT_FILENO);
 
+			////////////////////////////////////////
+			////////////////////////////////////////
+			
+			//close(sockets[1]);
+			//if (write(sockets[0], DATA1, sizeof(DATA1)) < 0)
+			//	perror("writing stream message");
+			//if (read(sockets[0], buf, 1024) < 0)
+			//	perror("reading stream message");
+			//printf("-->%s\n", buf);
+			//close(sockets[0]);
+			////////////////////////////////////////
+			////////////////////////////////////////
+
 
 			dup2(fd2[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
+
+			//dup2(file_desc_test, out_fd1[1]) ; //
+
 
 
 			execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args);

@@ -76,6 +76,8 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 
 
 
+				printf("Struct form child 1: %d %d \n", first_client_message->message_id, first_client_message->params.status);
+				printf("Struct form child 1: %d %d \n", first_client_message->message_id, first_client_message->params.bid);
 				printf("Struct form child 1: %d %d \n", first_client_message->message_id, first_client_message->params.delay);
 
 				//printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.delay);
@@ -119,9 +121,9 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 				test_server_message->message_id = 0;
 				test_server_message->params = test_output_info->info;
 
-				//write(out_fd1[0],test_server_message,sizeof(sm));
+				write(p1[0],test_server_message,sizeof(sm));
 				//write(out_fd1[0],"1111",4);
-				//close(out_fd1[0]);
+				//close(p1[0]);
 
 
 			}
@@ -204,6 +206,7 @@ int main()
 	//////////////////////IO REDIRECTION///////////////////////
 
 
+	char line2[256]; //test
 
 
 	int fd1[2];
@@ -302,11 +305,15 @@ int main()
   				//close(out_fd1[0]);
 
 				printf("STDOUT_FILENO: %d\n\n", STDOUT_FILENO);
+
+				close(fd1[0]);
 				
 				dup2(fd1[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
-				//dup2(STDIN_FILENO, fd1[1] ) ; //
-				//close(out_fd1[0]);
+				dup2(fd1[1], STDIN_FILENO ) ; //
+				
+				//close(fd1[1]);
 
+				
 
 
 				//if (read(out_fd1[1], buf, 1024) < 0)
@@ -369,6 +376,22 @@ int main()
 
 			//dup2(file_desc_test, out_fd1[1]) ; //
 
+
+			/////////////////WRITING TO A FILE////////////
+			
+			//out_fd1 is written in child_1 and 
+			//the value is being written to the file for debugging here in child_2
+			/*
+			int n;
+			for ( ; ; ) {
+				// on the socket pair we cannot use printf, scanf, etc. 
+				// For printf, scanf, etc. we need to have a pseudoterminal.  
+				n = read(out_fd1[1], line2, 256-1);
+				if (n < 0) break;
+				line2[n] = '\0';
+				write(file_desc_test, line2,n);
+	  		}*/
+			/////////////////WRITING TO A FILE////////////
 
 
 			execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args);

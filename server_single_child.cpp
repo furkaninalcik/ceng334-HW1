@@ -122,7 +122,6 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 				test_server_message->params = test_output_info->info;
 
 				write(p1[0],test_server_message,sizeof(sm));
-				printf("test_server_message ID %d\n", test_server_message->message_id );
 				//write(out_fd1[0],"1111",4);
 				//close(p1[0]);
 
@@ -228,11 +227,6 @@ int main()
 	int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
 
 	////////////////////////////////////////
-//	oi* test_output_info = new oi{};
-//	cei* test_connection_established_info = new cei{};
-//	sm* test_server_message = new sm{};
-
-
 	///////////////////////////////////////
 	
 	int sockets[2], child;
@@ -315,28 +309,8 @@ int main()
 				close(fd1[0]);
 				
 				dup2(fd1[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
-
 				dup2(fd1[1], STDIN_FILENO ) ; //
 				
-				/*
-				test_connection_established_info->client_id = 0; 
-				test_connection_established_info->starting_bid = 0;
-				test_connection_established_info->current_bid = 0;
-				test_connection_established_info->minimum_increment = 5;
-
-
-				test_output_info->type = 0;
-				test_output_info->pid = 8888;//*process_id_1;
-				test_output_info->info.start_info = *test_connection_established_info;
-
-
-				test_server_message->message_id = 0;
-				test_server_message->params = test_output_info->info;
-				*/
-				
-				//write(file_desc_test,test_server_message,sizeof(sm));
-
-
 				//close(fd1[1]);
 
 				

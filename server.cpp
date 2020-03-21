@@ -114,11 +114,13 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 				test_output_info->type = first_client_message->message_id;
 				test_output_info->pid = pid1;//*process_id_1;
 				test_output_info->info.start_info = *test_connection_established_info;
+				//test_output_info->info.result_info = NULL;
+				//test_output_info->info.winner_info = NULL;
 
 				print_output(test_output_info, 0); // 0 will be replaced by the client id assigned to the bidder
 
 
-				test_server_message->message_id = 0;
+				test_server_message->message_id = 1;
 				test_server_message->params = test_output_info->info;
 
 				write(p1[0],test_server_message,sizeof(sm));
@@ -314,10 +316,27 @@ int main()
 
 				close(fd1[0]);
 				
-				dup2(fd1[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
+				//dup2(fd1[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
 
-				dup2(fd1[1], STDIN_FILENO ) ; //
+				//dup2(fd1[1], STDIN_FILENO ) ; //
 				
+
+				if (fd1[1] != STDIN_FILENO) { /*Redirect standard input to socketpair*/
+					if (dup2(fd1[1], STDIN_FILENO) != STDIN_FILENO) {
+						perror("Cannot dup2 stdin");
+						exit(0);
+					}
+				}
+				printf("FD1 1: %d\n", fd1[1] );
+				printf("STDIN: %d\n", STDIN_FILENO );
+
+				if (fd1[1] != STDOUT_FILENO) { //Redirect standard output to socketpair
+					if (dup2(fd1[1], STDOUT_FILENO) != STDOUT_FILENO) {
+						perror("Cannot dup2 stdout");
+						exit(0);
+					}
+				}
+
 				/*
 				test_connection_established_info->client_id = 0; 
 				test_connection_established_info->starting_bid = 0;
@@ -399,8 +418,9 @@ int main()
 
 
 			dup2(fd2[1], STDOUT_FILENO) ; //  STDOUT_FILENO = 1
+			dup2(fd2[1], STDIN_FILENO) ; //  STDIN_FILENO = 1
 
-			//dup2(file_desc_test, out_fd1[1]) ; //
+			//dup2(out_fd1[1], STDIN_FILENO) ; //
 
 
 			/////////////////WRITING TO A FILE////////////
@@ -415,7 +435,7 @@ int main()
 				n = read(out_fd1[1], line2, 256-1);
 				if (n < 0) break;
 				line2[n] = '\0';
-				write(file_desc_test, line2,n);
+				write(file_desc_test, line2,n);break;
 	  		}*/
 			/////////////////WRITING TO A FILE////////////
 

@@ -7,9 +7,6 @@
  *       to the socketpair [1] and then we echo what we read.
  *       In the parent we get input from terminal, send to child,
  *       read from child, and print. 
-
-https://cis.temple.edu/~giorgio/old/cis307f01/readings/socketpair.c
-
  */
 
 #include <stdio.h>
@@ -32,15 +29,9 @@ main ()
 {
 	char line[LINEMAX];
 	char line1[LINEMAX];
-
-	char line2[LINEMAX]; //test
-
 	pid_t child;
 	int fd[2];
 	int rc;
-
-	int file_desc_1 = open("child_1_output.txt",O_WRONLY | O_APPEND); 
-
 
 	rc = socketpair( AF_UNIX, SOCK_STREAM, 0, fd );
 	if ( rc < 0 ) {
@@ -52,101 +43,28 @@ main ()
 		perror("Cannot fork");
 		exit(0);
 	}
-	
 	if (child == 0) { /* child - it uses fd[1] */
-
 		close (fd[0]);
-
-		//dup2(fd[1] , file_desc_1);
-
-		printf("FD 0: %d\n", fd[0] );
-		printf("FD 1: %d\n", fd[1] );
-		
-		printf("STDIN: %d\n", STDIN_FILENO );
-		printf("STDOUT: %d\n", STDOUT_FILENO );
-
-		
-		printf("child_1_output FD: %d\n", file_desc_1 );
-
-
 		if (fd[1] != STDIN_FILENO) { /*Redirect standard input to socketpair*/
 			if (dup2(fd[1], STDIN_FILENO) != STDIN_FILENO) {
 				perror("Cannot dup2 stdin");
 				exit(0);
 			}
 		}
-		printf("FD 1: %d\n", fd[1] );
-		printf("STDIN: %d\n", STDIN_FILENO );
-		printf("TEST\n");
-		printf("TEST\n");
-		printf("TEST\n");
-		printf("TEST\n");
-
-		if (fd[1] != STDOUT_FILENO) { //Redirect standard output to socketpair
-			printf("TEST 2\n");
-
+		if (fd[1] != STDOUT_FILENO) { /*Redirect standard output to socketpair*/
 			if (dup2(fd[1], STDOUT_FILENO) != STDOUT_FILENO) {
-				printf("TEST 3\n");
-
-				perror("Cannot dup2 stdout");
-				exit(0);
-			}
-			printf("TEST 4 \n");
-
-		}
-		printf("TEST\n");
-
-		/////////////////WRITING TO A FILE////////////
-		/*
-		int n;
-		for ( ; ; ) {
-			// on the socket pair we cannot use printf, scanf, etc. 
-			// For printf, scanf, etc. we need to have a pseudoterminal.  
-			n = read(fd[1], line2, LINEMAX-1);
-			if (n < 0) break;
-			line[n] = '\0';
-			write(file_desc_1, line2,n);
-  		}*/
-		/////////////////WRITING TO A FILE////////////
-
-   	
-
-		/*
-		if (file_desc_1 != STDOUT_FILENO) { //Redirect standard output to socketpair
-			if (dup2(file_desc_1, STDOUT_FILENO) != STDOUT_FILENO) {
 				perror("Cannot dup2 stdout");
 				exit(0);
 			}
 		}
-
-		
-		
-		*/
-		
-		char *args[3];
-		args[0] = "Bidder";  // Convention! Not required!! 
-		args[1] = "1123";
-		args[2] = NULL;
-
-		if (execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args) < 0) {
-			perror("Cannot exec");
-			exit(0);
-		}
-		exit(0);
-		/*
 		if (execl("./echoline", "echoline", NULL) < 0) {
 			perror("Cannot exec");
 			exit(0);
 		}
 		exit(0);
-		*/
 	}
-	
-
 	/* Parent - use to talk to child fd[0] */
 	for ( ; ; ) {
-		printf("TEST PPP \n");
-
 		printf("Enter a line: ");
 		fgets(line, LINEMAX-1, stdin);
 		/* on the socket pair we cannot use printf, scanf, etc. */
@@ -155,6 +73,6 @@ main ()
 		read(fd[0], line1, LINEMAX-1);
 		line[strlen(line1)-1] = '\0';
 		fputs(line1, stdout);
-	}
+		}
 	return 0;
 }

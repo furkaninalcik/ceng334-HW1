@@ -22,7 +22,7 @@ main()
     n = read(STDIN_FILENO, line, LINEMAX-1);
     if (n < 0) break;
     line[n] = '\0';
-    write(STDOUT_FILENO, line, n);
+    write(STDOUT_FILENO, "line\n", n);
   }
   return 0;
 }

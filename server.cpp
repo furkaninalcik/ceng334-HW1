@@ -29,10 +29,7 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 	
 	
 
-	ii* test_input_info = new ii{};
-	ii* test_input_info2 = new ii{};
 
-	oi* test_output_info = new oi{};
 
 	int m, r;
 	int open[2] = {1,1}; /* keep a flag for if pipe is still open */
@@ -44,9 +41,15 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 	
 	printf("CONTROL\n");
 
-	cei* test_connection_established_info = new cei{};
+	ii* input_info = new ii{};
+	ii* input_info2 = new ii{};
 
-	sm* test_server_message = new sm{};
+	oi* output_info = new oi{};
+
+
+	cei* connection_established_info = new cei{};
+
+	sm* server_message = new sm{};
 
 
 
@@ -64,10 +67,10 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 		if (FD_ISSET(p1[0], &readset)) {  /* check if first pipe is in readset */
 			
 			//r = read(p1[0], buf, 8);
-			cm* first_client_message;
+			cm* client_message;
 
 
-			r = read(p1[0], first_client_message, sizeof(cm));
+			r = read(p1[0], client_message, sizeof(cm));
 			
 			if (r == 0)  	/* EOF */
 				open[0] = 0;
@@ -76,57 +79,70 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 
 
 
-				printf("Struct form child 1: %d %d \n", first_client_message->message_id, first_client_message->params.status);
-				printf("Struct form child 1: %d %d \n", first_client_message->message_id, first_client_message->params.bid);
-				printf("Struct form child 1: %d %d \n", first_client_message->message_id, first_client_message->params.delay);
+				printf("Struct form child 1: %d %d \n", client_message->message_id, client_message->params.status);
+				printf("Struct form child 1: %d %d \n", client_message->message_id, client_message->params.bid);
+				printf("Struct form child 1: %d %d \n", client_message->message_id, client_message->params.delay);
 
-				//printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.delay);
-				//printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.status);
-				//printf("FIRST CLIENT MESSAGE: %d\n", first_client_message->params.bid);
-
-				//pid_t* process_id_1;
-
-				//read(pid1[0], process_id_1, sizeof(pid_t));
-
-
-				test_input_info->type = first_client_message->message_id;
-				test_input_info->pid = pid1;//*process_id_1;
-				test_input_info->info = first_client_message->params;
-				
-				pid_t pid = getpid();
-
-  				//printf("PID 01: %d \n", pid);
-
-
-				print_input(test_input_info, 0); // 0 will be replaced by the client id assigned to the bidder
+				if (client_message->message_id == 1)
+				{
 					
-
-				//cei test_connection_established_info ;//= {0,0,0,5};
-
-				
-				test_connection_established_info->client_id = 0; 
-				test_connection_established_info->starting_bid = 0;
-				test_connection_established_info->current_bid = 0;
-				test_connection_established_info->minimum_increment = 5;
-				/*
-				*/
-
-				test_output_info->type = first_client_message->message_id;
-				test_output_info->pid = pid1;//*process_id_1;
-				test_output_info->info.start_info = *test_connection_established_info;
-				//test_output_info->info.result_info = NULL;
-				//test_output_info->info.winner_info = NULL;
-
-				print_output(test_output_info, 0); // 0 will be replaced by the client id assigned to the bidder
+					input_info->type = client_message->message_id;
+					input_info->pid = pid1;//*process_id_1;
+					input_info->info = client_message->params;
+					
+					//pid_t pid = getpid(); THIS DOES NOT WORK SINCE 
+										  //THE RETURN VALUE IS THE PROCESS ID OF THE PARENT, NOT THE CHILD
 
 
-				test_server_message->message_id = 1;
-				test_server_message->params = test_output_info->info;
+					print_input(input_info, 0); // 0 will be replaced by the client id assigned to the bidder
+						
 
-				write(p1[0],test_server_message,sizeof(sm));
-				printf("test_server_message ID %d\n", test_server_message->message_id );
-				//write(out_fd1[0],"1111",4);
-				//close(p1[0]);
+					//cei connection_established_info ;//= {0,0,0,5};
+
+					
+					connection_established_info->client_id = 0; 
+					connection_established_info->starting_bid = 0;
+					connection_established_info->current_bid = 0;
+					connection_established_info->minimum_increment = 5;
+					/*
+					*/
+
+					output_info->type = client_message->message_id;
+					output_info->pid = pid1;//*process_id_1;
+					output_info->info.start_info = *connection_established_info;
+					//output_info->info.result_info = NULL;
+					//output_info->info.winner_info = NULL;
+
+					print_output(output_info, 0); // 0 will be replaced by the client id assigned to the bidder
+
+
+					server_message->message_id = 1;
+					server_message->params.start_info = *connection_established_info;
+
+					write(p1[0],server_message,sizeof(sm));
+					printf("server_message ID %d\n", server_message->message_id );
+					//write(out_fd1[0],"1111",4);
+					//close(p1[0]);
+
+
+
+				}else if (client_message->message_id == 2)
+				{
+					printf("Message received!\n");
+					input_info->type = client_message->message_id;
+					input_info->pid = pid1;//*process_id_1;
+					input_info->info = client_message->params;
+					
+					//pid_t pid = getpid(); THIS DOES NOT WORK SINCE 
+										  //THE RETURN VALUE IS THE PROCESS ID OF THE PARENT, NOT THE CHILD
+
+
+					print_input(input_info, 0); // 0 will be replaced by the client id assigned to the bidder
+					
+				}
+
+
+					
 
 
 			}
@@ -138,9 +154,9 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 		/* following if is not in else since both may have data to read */
 		if (FD_ISSET(p2[0], &readset)) {  /* check if second pipe is in readset */
 
-			cm* first_client_message;
+			cm* client_message;
 
-			r = read(p2[0], first_client_message, sizeof(cm));
+			r = read(p2[0], client_message, sizeof(cm));
 			//r = read(p2[0], buf, 8);
 
 
@@ -152,21 +168,21 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 			else{
 
 
-				printf("Struct form child 2: %d %d \n", first_client_message->message_id, first_client_message->params.delay);
+				printf("Struct form child 2: %d %d \n", client_message->message_id, client_message->params.delay);
 
 
 				
-				//*test_input_info = {1, 9999, first_client_message->params};
-				test_input_info2->type = first_client_message->message_id;
-				test_input_info2->pid  = pid2;
-				test_input_info2->info = first_client_message->params;
+				//*input_info = {1, 9999, client_message->params};
+				input_info2->type = client_message->message_id;
+				input_info2->pid  = pid2;
+				input_info2->info = client_message->params;
 				
 				pid_t pid = getpid();
 
   				//printf("PID 02: %d \n", pid);
 
 
-				print_input(test_input_info2, 1); // 0 will be replaced by the client id assigned to the bidder
+				print_input(input_info2, 1); // 0 will be replaced by the client id assigned to the bidder
 
 				//cei test;
 
@@ -201,7 +217,7 @@ int main()
   	}
   	
   	scanf("%d %d %d", &starting_bid, &minimum_increment, &number_of_bidders);
-  	//scanf("%d %d", &first_bidder_executable, &minimum_increment);
+  	//scanf("%d %d", &bidder_executable, &minimum_increment);
  	
  
   	printf("%d , %d , %d\n", starting_bid, minimum_increment , number_of_bidders);

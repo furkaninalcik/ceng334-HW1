@@ -28,7 +28,9 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
     int buf[8];
 	
 	
-
+    int current_highest_bid = 0;
+    int current_highest_bidder_id ;
+    int min_inc = 5 ;
 
 
 	int m, r;
@@ -48,8 +50,11 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 
 
 	cei* connection_established_info = new cei{};
+	bi* bid_info = new bi{};
 
-	sm* server_message = new sm{};
+	sm* server_message_start  = new sm{};
+	sm* server_message_result = new sm{};
+	sm* server_message_winner = new sm{};
 
 
 
@@ -86,7 +91,7 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 				if (client_message->message_id == 1)
 				{
 					
-					input_info->type = client_message->message_id;
+					input_info->type = CLIENT_CONNECT;
 					input_info->pid = pid1;//*process_id_1;
 					input_info->info = client_message->params;
 					
@@ -103,11 +108,11 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 					connection_established_info->client_id = 0; 
 					connection_established_info->starting_bid = 0;
 					connection_established_info->current_bid = 0;
-					connection_established_info->minimum_increment = 5;
+					connection_established_info->minimum_increment = min_inc;
 					/*
 					*/
 
-					output_info->type = client_message->message_id;
+					output_info->type = SERVER_CONNECTION_ESTABLISHED;
 					output_info->pid = pid1;//*process_id_1;
 					output_info->info.start_info = *connection_established_info;
 					//output_info->info.result_info = NULL;
@@ -116,11 +121,11 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 					print_output(output_info, 0); // 0 will be replaced by the client id assigned to the bidder
 
 
-					server_message->message_id = 1;
-					server_message->params.start_info = *connection_established_info;
+					server_message_start->message_id = SERVER_CONNECTION_ESTABLISHED;
+					server_message_start->params.start_info = *connection_established_info;
 
-					write(p1[0],server_message,sizeof(sm));
-					printf("server_message ID %d\n", server_message->message_id );
+					write(p1[0],server_message_start,sizeof(sm));
+					printf("server_message_start ID %d\n", server_message_start->message_id );
 					//write(out_fd1[0],"1111",4);
 					//close(p1[0]);
 
@@ -129,16 +134,40 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 				}else if (client_message->message_id == 2)
 				{
 					printf("Message received!\n");
-					input_info->type = client_message->message_id;
+					input_info->type = CLIENT_BID;
 					input_info->pid = pid1;//*process_id_1;
 					input_info->info = client_message->params;
 					
-					//pid_t pid = getpid(); THIS DOES NOT WORK SINCE 
-										  //THE RETURN VALUE IS THE PROCESS ID OF THE PARENT, NOT THE CHILD
-
-
 					print_input(input_info, 0); // 0 will be replaced by the client id assigned to the bidder
 					
+					if (client_message->params.bid >= current_highest_bid + min_inc ) //BID_ACCEPTED -> 0
+					{
+
+						current_highest_bid = client_message->params.bid;
+						current_highest_bidder_id = 0; 					// BIDDER ID -> 0 STATIC JUST FOR NOW
+
+						bid_info->result      = BID_ACCEPTED; //BID_ACCEPTED -> 0
+						bid_info->current_bid = current_highest_bid;
+
+						server_message_result->message_id = SERVER_BID_RESULT;
+						server_message_result->params.result_info = *bid_info;
+						
+
+						output_info->type = SERVER_BID_RESULT;
+						output_info->pid = pid1;//*process_id_1;
+						//output_info->info.start_info = NULL;
+						output_info->info.result_info = *bid_info;
+						//output_info->info.winner_info = NULL;
+
+						print_output(output_info, 0); // 0 will be replaced by the client id assigned to the bidder
+
+						write(p1[0],server_message_result,sizeof(sm));
+
+
+					} 
+
+
+
 				}
 
 

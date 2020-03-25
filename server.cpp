@@ -81,13 +81,6 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 			if (r == 0)  	/* EOF */
 				open[0] = 0;
 			else{
-				//printf("Buffer form child 1: %d %d \n", buf[0], buf[1] );
-
-
-
-				printf("Struct form child 1: %d %d \n", client_message->message_id, client_message->params.status);
-				printf("Struct form child 1: %d %d \n", client_message->message_id, client_message->params.bid);
-				printf("Struct form child 1: %d %d \n", client_message->message_id, client_message->params.delay);
 
 				if (client_message->message_id == 1)
 				{
@@ -100,18 +93,13 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 										  //THE RETURN VALUE IS THE PROCESS ID OF THE PARENT, NOT THE CHILD
 
 
-					print_input(input_info, 0); // 0 will be replaced by the client id assigned to the bidder
 						
 
-					//cei connection_established_info ;//= {0,0,0,5};
-
-					
 					connection_established_info->client_id = 0; 
 					connection_established_info->starting_bid = starting_bid;
 					connection_established_info->current_bid = current_highest_bid;
 					connection_established_info->minimum_increment = min_inc;
-					/*
-					*/
+	
 
 					output_info->type = SERVER_CONNECTION_ESTABLISHED;
 					output_info->pid = pid1;//*process_id_1;
@@ -119,7 +107,7 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 					//output_info->info.result_info = NULL;
 					//output_info->info.winner_info = NULL;
 
-					print_output(output_info, 0); // 0 will be replaced by the client id assigned to the bidder
+					
 
 
 					server_message_start->message_id = SERVER_CONNECTION_ESTABLISHED;
@@ -139,7 +127,6 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 					input_info->pid = pid1;//*process_id_1;
 					input_info->info = client_message->params;
 					
-					print_input(input_info, 0); // 0 will be replaced by the client id assigned to the bidder
 					
 					if (client_message->params.bid >= current_highest_bid + min_inc ) //BID_ACCEPTED -> 0
 					{
@@ -150,19 +137,7 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 						bid_info->result      = BID_ACCEPTED; //BID_ACCEPTED -> 0
 						bid_info->current_bid = current_highest_bid;
 
-						server_message_result->message_id = SERVER_BID_RESULT;
-						server_message_result->params.result_info = *bid_info;
 						
-
-						output_info->type = SERVER_BID_RESULT;
-						output_info->pid = pid1;//*process_id_1;
-						//output_info->info.start_info = NULL;
-						output_info->info.result_info = *bid_info;
-						//output_info->info.winner_info = NULL;
-
-						print_output(output_info, 0); // 0 will be replaced by the client id assigned to the bidder
-
-						write(p1[0],server_message_result,sizeof(sm));
 
 
 					} else if (client_message->params.bid < starting_bid) //BID_LOWER_THAN_STARTING_BID -> 1
@@ -172,19 +147,7 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 						bid_info->result      = BID_LOWER_THAN_STARTING_BID; //BID_LOWER_THAN_STARTING_BID -> 1
 						bid_info->current_bid = current_highest_bid;
 
-						server_message_result->message_id = SERVER_BID_RESULT;
-						server_message_result->params.result_info = *bid_info;
 						
-
-						output_info->type = SERVER_BID_RESULT;
-						output_info->pid = pid1;//*process_id_1;
-						//output_info->info.start_info = NULL;
-						output_info->info.result_info = *bid_info;
-						//output_info->info.winner_info = NULL;
-
-						print_output(output_info, 0); // 0 will be replaced by the client id assigned to the bidder
-
-						write(p1[0],server_message_result,sizeof(sm));
 
 					} else if (client_message->params.bid < current_highest_bid) //BID_LOWER_THAN_CURRENT -> 2
 					{
@@ -193,19 +156,7 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 						bid_info->result      = BID_LOWER_THAN_CURRENT; //BID_LOWER_THAN_CURRENT -> 2
 						bid_info->current_bid = current_highest_bid;
 
-						server_message_result->message_id = SERVER_BID_RESULT;
-						server_message_result->params.result_info = *bid_info;
 						
-
-						output_info->type = SERVER_BID_RESULT;
-						output_info->pid = pid1;//*process_id_1;
-						//output_info->info.start_info = NULL;
-						output_info->info.result_info = *bid_info;
-						//output_info->info.winner_info = NULL;
-
-						print_output(output_info, 0); // 0 will be replaced by the client id assigned to the bidder
-
-						write(p1[0],server_message_result,sizeof(sm));
 
 					} else if (client_message->params.bid - current_highest_bid < min_inc) //BID_INCREMENT_LOWER_THAN_MINIMUM ->3
 					{
@@ -213,20 +164,24 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 						bid_info->result      = BID_INCREMENT_LOWER_THAN_MINIMUM; //BID_INCREMENT_LOWER_THAN_MINIMUM -> 3
 						bid_info->current_bid = current_highest_bid;
 
-						server_message_result->message_id = SERVER_BID_RESULT;
-						server_message_result->params.result_info = *bid_info;
 						
-
-						output_info->type = SERVER_BID_RESULT;
-						output_info->pid = pid1;//*process_id_1;
-						//output_info->info.start_info = NULL;
-						output_info->info.result_info = *bid_info;
-						//output_info->info.winner_info = NULL;
-
-						print_output(output_info, 0); // 0 will be replaced by the client id assigned to the bidder
-
-						write(p1[0],server_message_result,sizeof(sm));
+					} else{
+						printf("ERROR !!!!!!!!!!!!!!!!!!!!!!\n");
 					}
+
+					server_message_result->message_id = SERVER_BID_RESULT;
+					server_message_result->params.result_info = *bid_info;
+					
+
+					output_info->type = SERVER_BID_RESULT;
+					output_info->pid = pid1;//*process_id_1;
+					//output_info->info.start_info = NULL;
+					output_info->info.result_info = *bid_info;
+					//output_info->info.winner_info = NULL;
+
+					
+
+					write(p1[0],server_message_result,sizeof(sm));
 
 
 
@@ -236,14 +191,15 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 					input_info->pid = pid1;//*process_id_1;
 					input_info->info = client_message->params;
 					
-					//pid_t pid = getpid(); THIS DOES NOT WORK SINCE 
-										  //THE RETURN VALUE IS THE PROCESS ID OF THE PARENT, NOT THE CHILD
 
 
-					print_input(input_info, 0); // 0 will be replaced by the client id assigned to the bidder
 						
 
 				}
+
+				print_input(input_info, 0); // 0 will be replaced by the client id assigned to the bidder
+
+				print_output(output_info, 0); // 0 will be replaced by the client id assigned to the bidder
 
 
 					

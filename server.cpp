@@ -197,6 +197,9 @@ void server(int p1[], int p2[], int pid1, int pid2, int out_fd1[])
 
 				}
 
+				//PDF:>
+				//Print the message to the standard output using the provided library as explained in the Input & Output section.
+				//PRINT INPUT SHOULD GET ON TOP -> CHECK OUT THE PDF 
 				print_input(input_info, 0); // 0 will be replaced by the client id assigned to the bidder
 
 				print_output(output_info, 0); // 0 will be replaced by the client id assigned to the bidder
@@ -295,8 +298,7 @@ int main()
 	
 	int pipe1 = PIPE(fd1); //socket creation 1
 	int pipe2 = PIPE(fd2); //socket creation 2
-	int pipe3 = PIPE(out_fd1); //socket creation 3
-	int pipe4 = PIPE(out_fd2); //socket creation 4
+	
 
 
 	int file_desc_1 = open("child_1_output.txt",O_WRONLY | O_APPEND); 
@@ -324,7 +326,7 @@ int main()
 	
 
 
-	if (pipe1 == 0 && pipe2 == 0 && pipe3 == 0 && pipe4 == 0)
+	if (pipe1 == 0 && pipe2 == 0 )
 	{
 		printf("Socket Pair is succesfully created.\n");
 

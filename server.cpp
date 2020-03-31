@@ -20,12 +20,28 @@ extern int errno;
 
 //////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////onursehitoglu//////////////////////////////////
+
+bool isAllCompleted(bool completionRecord[], int number_of_bidders){
+	
+	bool result = true;
+
+	for (int i = 0; i < number_of_bidders; ++i)
+	{
+		result = result && completionRecord[i];			
+	}
+
+	return result;
+
+}
+
 void server(int fd_list[][2], int pid_list[2])
 {
 	fd_set readset;
 	char mess[40];
 
     int buf[8];
+
+    int number_of_bidders = 2;
 
 
     int *p1 = fd_list[0];
@@ -39,6 +55,11 @@ void server(int fd_list[][2], int pid_list[2])
     int current_highest_bidder_id ;
     int min_inc = 5 ;
     int starting_bid = 0 ;
+
+
+    bool bidderCompletionRecord[2]; //CHANGE IT! -> THE LENGTH OF THE ARRAY SHOULD BE EQUAL TO THE NUMBER OF BIDDERS 
+    bidderCompletionRecord[0] = false; //THIS WIL BE SET TO true WHEN THE BIDDER SENDS THE "CLIENT_FINISHED" MESSAGE
+    bidderCompletionRecord[1] = false; //THIS WIL BE SET TO true WHEN THE BIDDER SENDS THE "CLIENT_FINISHED" MESSAGE
 
 
 	int m, r;
@@ -59,10 +80,11 @@ void server(int fd_list[][2], int pid_list[2])
 
 	cei* connection_established_info = new cei{};
 	bi* bid_info = new bi{};
+	wi* the_winner_info = new wi{};
 
-	sm* server_message_start  = new sm{};
-	sm* server_message_result = new sm{};
-	sm* server_message_winner = new sm{};
+	sm* server_message_start  = new sm{};  //TRY NOT TO USE IT
+	sm* server_message_result = new sm{};  // CHANGE ITS NAME
+	sm* server_message_winner = new sm{};  //TRY NOT TO USE IT
 
 
 
@@ -103,7 +125,8 @@ void server(int fd_list[][2], int pid_list[2])
 											  //THE RETURN VALUE IS THE PROCESS ID OF THE PARENT, NOT THE CHILD
 
 
-							
+						print_input(input_info, i); // i is the client id assigned to the bidder
+						
 
 						connection_established_info->client_id = i; 
 						connection_established_info->starting_bid = starting_bid;
@@ -120,10 +143,12 @@ void server(int fd_list[][2], int pid_list[2])
 						
 
 
-						server_message_start->message_id = SERVER_CONNECTION_ESTABLISHED;
+						server_message_start->message_id = SERVER_CONNECTION_ESTABLISHED; // change this to server_message_result  
 						server_message_start->params.start_info = *connection_established_info;
 
 						write(fd_list[i][0],server_message_start,sizeof(sm));
+						print_output(output_info, i); // i is the client id assigned to the bidder
+						
 						printf("server_message_start ID %d\n", server_message_start->message_id );
 						//write(out_fd1[0],"1111",4);
 						//close(fd_list[i][0]);
@@ -132,12 +157,15 @@ void server(int fd_list[][2], int pid_list[2])
 
 					}else if (client_message->message_id == 2)
 					{
-						printf("Message received!\n");
+						//printf("Message received!\n");
 						input_info->type = CLIENT_BID;
 						input_info->pid = pid_list[i];//*process_id_1;
 						input_info->info = client_message->params;
 						
 						
+						print_input(input_info, i); // i is the client id assigned to the bidder
+
+
 						if (client_message->params.bid >= current_highest_bid + min_inc ) //BID_ACCEPTED -> 0
 						{
 
@@ -152,7 +180,7 @@ void server(int fd_list[][2], int pid_list[2])
 
 						} else if (client_message->params.bid < starting_bid) //BID_LOWER_THAN_STARTING_BID -> 1
 						{
-							printf("11111111111111111111111111111111\n");
+							//printf("11111111111111111111111111111111\n");
 
 							bid_info->result      = BID_LOWER_THAN_STARTING_BID; //BID_LOWER_THAN_STARTING_BID -> 1
 							bid_info->current_bid = current_highest_bid;
@@ -161,7 +189,7 @@ void server(int fd_list[][2], int pid_list[2])
 
 						} else if (client_message->params.bid < current_highest_bid) //BID_LOWER_THAN_CURRENT -> 2
 						{
-							printf("22222222222222222222222222222222\n");
+							//printf("22222222222222222222222222222222\n");
 
 							bid_info->result      = BID_LOWER_THAN_CURRENT; //BID_LOWER_THAN_CURRENT -> 2
 							bid_info->current_bid = current_highest_bid;
@@ -170,7 +198,7 @@ void server(int fd_list[][2], int pid_list[2])
 
 						} else if (client_message->params.bid - current_highest_bid < min_inc) //BID_INCREMENT_LOWER_THAN_MINIMUM ->3
 						{
-							printf("33333333333333333333333333333333\n");
+							//printf("33333333333333333333333333333333\n");
 							bid_info->result      = BID_INCREMENT_LOWER_THAN_MINIMUM; //BID_INCREMENT_LOWER_THAN_MINIMUM -> 3
 							bid_info->current_bid = current_highest_bid;
 
@@ -192,6 +220,7 @@ void server(int fd_list[][2], int pid_list[2])
 						
 
 						write(fd_list[i][0],server_message_result,sizeof(sm));
+						print_output(output_info, i); // i is the client id assigned to the bidder
 
 
 
@@ -200,19 +229,43 @@ void server(int fd_list[][2], int pid_list[2])
 						input_info->type = CLIENT_FINISHED;
 						input_info->pid = pid_list[i];//*process_id_1;
 						input_info->info = client_message->params;
-						
 
+						print_input(input_info, i); // i is the client id assigned to the bidder
+
+						
+						bidderCompletionRecord[i] = 1;
+
+						if(isAllCompleted(bidderCompletionRecord, number_of_bidders)){
+							
+							the_winner_info->winner_id   = current_highest_bidder_id;
+							the_winner_info->winning_bid = current_highest_bid;
+
+
+							server_message_winner->message_id = SERVER_AUCTION_FINISHED;
+							server_message_winner->params.winner_info = *the_winner_info;
+
+							print_server_finished(current_highest_bidder_id,current_highest_bid);
+							
+							for (int i = 0; i < number_of_bidders; ++i)
+							{
+								output_info->type = SERVER_AUCTION_FINISHED;
+								output_info->pid = pid_list[i];//*process_id_1;
+								//output_info->info.start_info = NULL;
+								//output_info->info.result_info = *bid_info;
+								output_info->info.winner_info = *the_winner_info;
+
+								write(fd_list[i][0],server_message_winner,sizeof(sm));
+								print_output(output_info, i); // i is the client id assigned to the bidder
+
+							}
+
+						}
 
 							
 
 					}
 
-					//PDF:>
-					//Print the message to the standard output using the provided library as explained in the Input & Output section.
-					//PRINT INPUT SHOULD GET ON TOP -> CHECK OUT THE PDF 
-					print_input(input_info, i); // i is the client id assigned to the bidder
 
-					print_output(output_info, i); // i is the client id assigned to the bidder
 
 
 						

@@ -34,7 +34,7 @@ bool isAllCompleted(bool completionRecord[], int number_of_bidders){
 
 }
 
-void server(int fd_list[][2], int pid_list[2])
+void server(int fd_list[][2], int pid_list[2], int status_list[2])
 {
 	fd_set readset;
 	char mess[40];
@@ -102,7 +102,7 @@ void server(int fd_list[][2], int pid_list[2])
 
 		for (int i = 0; i < 2; ++i)
 		{
-			if (FD_ISSET(fd_list[i][0], &readset)) {  /* check if first pipe is in readset */
+			if (FD_ISSET(fd_list[i][0], &readset)) {  /* check if pipe with index "i" is in readset */
 				
 				//r = read(fd_list[i][0], buf, 8);
 				cm* client_message;
@@ -232,6 +232,10 @@ void server(int fd_list[][2], int pid_list[2])
 
 						print_input(input_info, i); // i is the client id assigned to the bidder
 
+						printf("ID::: %d \n" , i);
+						
+						status_list[i] = client_message->params.status; // STATUS recieved from the client with id -> i
+						//status_list[i] = i+9; // Check if the array is passed by reference
 						
 						bidderCompletionRecord[i] = 1;
 
@@ -418,17 +422,27 @@ int main()
 				execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args);
 
 
-            	exit(0); 
+            	//exit(0); Should I exit or the bidder program has already exited   
+        	
         	}
         	pid_list[i] = child_pid;
 		}
 
-		
-		server(fd_list,pid_list);
+		int status_list[2];
+
+		server(fd_list, pid_list, status_list);
+
+		printf("status_list[0]: %d \n", status_list[0] );
+		printf("status_list[1]: %d \n", status_list[1] );
 
 
-		for (int i = 0; i < 2; i++) // 
-    		wait(&w); 
+		for (int i = 0; i < 2; i++) {
+    		pid_t childPid = wait(&w); 
+    		print_client_finished(i,w,1); // status match ???
+			printf("Child PID: %d\n",childPid );			
+			printf("Exit Status: %d\n",w );			
+		} 
+
 
 
 

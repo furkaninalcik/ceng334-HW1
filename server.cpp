@@ -366,7 +366,7 @@ int main()
 	
 
 
-   	int pid_list[2];     //lists of child pids 
+   	pid_t pid_list[2];     //lists of child pids 
 
 	if (pipe1 == 0 && pipe2 == 0 )
 	{
@@ -432,15 +432,31 @@ int main()
 
 		server(fd_list, pid_list, status_list);
 
-		printf("status_list[0]: %d \n", status_list[0] );
-		printf("status_list[1]: %d \n", status_list[1] );
+		//printf("status_list[0]: %d \n", status_list[0] );
+		//printf("status_list[1]: %d \n", status_list[1] );
+
+		int child_status;
 
 
 		for (int i = 0; i < 2; i++) {
-    		pid_t childPid = wait(&w); 
-    		print_client_finished(i,w,1); // status match ???
-			printf("Child PID: %d\n",childPid );			
-			printf("Exit Status: %d\n",w );			
+			
+			pid_t wPid = waitpid(pid_list[i], &child_status, 0);
+
+			if (WIFEXITED(child_status)){
+           		//printf("Child %d terminated with exit status %d\n", wPid, WEXITSTATUS(child_status));
+    			print_client_finished(i,WEXITSTATUS(child_status),WEXITSTATUS(child_status) == status_list[i]); // status match ???
+
+
+			}
+        	else{
+	            printf("Child %d terminate abnormally\n", wPid);
+
+        	}
+    		
+    		//pid_t childPid = wait(&w); 
+    		//print_client_finished(i,w,1); // status match ???
+			//printf("Child PID: %d\n",wPid );			
+			//printf("Exit Status: %d\n",w );			
 		} 
 
 

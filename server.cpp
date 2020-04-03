@@ -34,21 +34,45 @@ bool isAllCompleted(bool completionRecord[], int number_of_bidders){
 
 }
 
-void server(int fd_list[][2], int pid_list[2], int status_list[2])
+
+bool activeBidders(int* bidderActivityList, int number_of_bidders){
+
+	bool result = false;
+
+	for (int i = 0; i < number_of_bidders; ++i)
+	{
+		result = result || bidderActivityList[i];	// This will be true if anyone of the bidders is active
+	}
+
+	return result;
+
+}
+
+int maxFileDescriptor(int** fd_list, int number_of_bidders){
+
+	int max = 0;
+	for (int i = 0; i < number_of_bidders; ++i)
+	{
+		if (fd_list[i][0] > max){
+			max = fd_list[i][0];
+		}
+	}
+	return max;
+
+
+}
+
+void server(int** fd_list, int* pid_list, int* status_list, int number_of_bidders)
 {
+	//float open2[2] = {1,1}; /* keep a flag for if pipe is still open */
+
 	fd_set readset;
-	char mess[40];
+	//char mess[40];
 
-    int buf[8];
-
-    int number_of_bidders = 2;
+    //int buf[8];
 
 
-    int *p1 = fd_list[0];
-    int *p2 = fd_list[1];
 
-    int pid1 = pid_list[0];
-    int pid2 = pid_list[1];
 	
 	
     int current_highest_bid = 0;
@@ -56,57 +80,79 @@ void server(int fd_list[][2], int pid_list[2], int status_list[2])
     int min_inc = 5 ;
     int starting_bid = 0 ;
 
+    int m, r;
+	//int open[2] = {1,1}; /* keep a flag for if pipe is still open */
+	int* open = new int[number_of_bidders]; /* keep a flag for if pipe is still open */
 
-    bool bidderCompletionRecord[2]; //CHANGE IT! -> THE LENGTH OF THE ARRAY SHOULD BE EQUAL TO THE NUMBER OF BIDDERS 
-    bidderCompletionRecord[0] = false; //THIS WIL BE SET TO true WHEN THE BIDDER SENDS THE "CLIENT_FINISHED" MESSAGE
-    bidderCompletionRecord[1] = false; //THIS WIL BE SET TO true WHEN THE BIDDER SENDS THE "CLIENT_FINISHED" MESSAGE
+
+	//int c[1] = {9}; //CHANGE IT! -> THE LENGTH OF THE ARRAY SHOULD BE EQUAL TO THE NUMBER OF BIDDERS 
+    //bidderCompletionRecord[0] = 0; //THIS WIL BE SET TO true WHEN THE BIDDER SENDS THE "CLIENT_FINISHED" MESSAGE
+    //bidderCompletionRecord[1] = false; //THIS WIL BE SET TO true WHEN THE BIDDER SENDS THE "CLIENT_FINISHED" MESSAGE
 
 
-	int m, r;
-	int open[2] = {1,1}; /* keep a flag for if pipe is still open */
 
-	close(p1[1]); /* close unused ends */
-	close(p2[1]);
 
-	m = ((p1[0] > p2[0]) ? p1[0] : p2[0]) + 1; /* maximum of file descriptors */
+    bool* bidderCompletionRecord = new bool[number_of_bidders];
+
+    for (int i = 0; i < number_of_bidders; ++i)
+    {
+    	bidderCompletionRecord[i] = false;
+    	open[i] = 1; 
+    	close(fd_list[i][1]);
+
+    }
+
+
+	//close(fd_list[0][1]); /* close unused ends */
+	//close(fd_list[1][1]);
+
+	//m = ((fd_list[0][0] > fd_list[1][0]) ? fd_list[0][0] : fd_list[1][0]) + 1; /* maximum of file descriptors */
 	
+    m = maxFileDescriptor(fd_list, number_of_bidders) + 1 ;
+
+
 	printf("CONTROL\n");
 
-	ii* input_info = new ii{};
-	ii* input_info2 = new ii{};
+	ii* input_info = new ii{};  // FREE()!
 
-	oi* output_info = new oi{};
+	oi* output_info = new oi{}; // FREE()!
 
 
-	cei* connection_established_info = new cei{};
-	bi* bid_info = new bi{};
-	wi* the_winner_info = new wi{};
+	cei* connection_established_info = new cei{}; // FREE()!
+	bi* bid_info = new bi{}; // FREE()!
+	wi* the_winner_info = new wi{}; // FREE()!
 
 	sm* server_message_start  = new sm{};  //TRY NOT TO USE IT
 	sm* server_message_result = new sm{};  // CHANGE ITS NAME
 	sm* server_message_winner = new sm{};  //TRY NOT TO USE IT
 
+	cm* client_message = new cm{};
 
 
-	while (open[0] || open[1]) {
+
+
+	while (activeBidders(open, number_of_bidders)) {
 		/* following initializes a blocking set for select() */
 		FD_ZERO(&readset);
-		if (open[0]) FD_SET(fd_list[0][0],&readset);
-		if (open[1]) FD_SET(fd_list[1][0],&readset);
-		
+		//if (open[0]) FD_SET(fd_list[0][0],&readset);
+		//if (open[1]) FD_SET(fd_list[1][0],&readset);
+
+		for (int i = 0; i < number_of_bidders; ++i)
+		{
+			if (open[i]) FD_SET(fd_list[i][0],&readset);
+		}
+
 
 		/* the following code will block until any of them have data to read */
 		select(m, &readset, NULL,NULL,NULL);  /* no wset, eset, timeout */
 
 		/* now readset contains the fd's with available data */
 
-		for (int i = 0; i < 2; ++i)
+		for (int i = 0; i < number_of_bidders; ++i)
 		{
 			if (FD_ISSET(fd_list[i][0], &readset)) {  /* check if pipe with index "i" is in readset */
 				
 				//r = read(fd_list[i][0], buf, 8);
-				cm* client_message;
-
 
 				r = read(fd_list[i][0], client_message, sizeof(cm));
 				
@@ -239,7 +285,7 @@ void server(int fd_list[][2], int pid_list[2], int status_list[2])
 						status_list[i] = client_message->params.status; // STATUS recieved from the client with id -> i
 						//status_list[i] = i*9; // Check if the array is passed by reference
 						
-						bidderCompletionRecord[i] = 1;
+						bidderCompletionRecord[i] = true;
 
 						if(isAllCompleted(bidderCompletionRecord, number_of_bidders)){
 							
@@ -264,6 +310,7 @@ void server(int fd_list[][2], int pid_list[2], int status_list[2])
 								print_output(output_info, i); // i is the client id assigned to the bidder
 
 							}
+							free(bidderCompletionRecord);
 
 						}
 
@@ -292,6 +339,19 @@ void server(int fd_list[][2], int pid_list[2], int status_list[2])
 ///////////////////////////////onursehitoglu//////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
+
+bool socket_check(int* socket_list, int number_of_bidders){
+
+	bool result = true;
+
+	for (int i = 0; i < number_of_bidders; ++i)
+	{
+		result = result && (socket_list[i] == 0);
+	}
+
+	return result;
+}
+
 int main()
 {
 
@@ -303,7 +363,9 @@ int main()
     //dup2(file_desc, STDOUT_FILENO) ; //  STDOUT_FILENO = 1
 
 
-    int starting_bid, minimum_increment, number_of_bidders;
+    int starting_bid, minimum_increment, number_of_bidders, number_of_arguments;
+
+    
  	
   	int input_fds = open("./sample_to_work_on/inp1.txt", O_RDONLY);
 
@@ -313,10 +375,16 @@ int main()
   	}
   	
   	scanf("%d %d %d", &starting_bid, &minimum_increment, &number_of_bidders);
-  	//scanf("%d %d", &bidder_executable, &minimum_increment);
+    //scanf("%s %d", bidderExecutable, &number_of_arguments);
  	
  
   	printf("%d , %d , %d\n", starting_bid, minimum_increment , number_of_bidders);
+
+
+  	for (int i = 0; i < number_of_bidders; ++i)
+  	{
+  		//scanf("%s", );
+  	}
     
 	//////////////////////IO REDIRECTION///////////////////////
 
@@ -349,28 +417,50 @@ int main()
 
 
 	///////////////////////////////////////
-	
+	/*
 	int sockets[2], child;
    	char buf[1024];
    	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNIX, sockets) < 0) {
     	perror("opening stream socket pair");
     	exit(1);
    	}
+   	*/
 	////////////////////////////////////////
 	////////////////////////////////////////
 	
 
+   	printf("Number of Bidders: %d \n", number_of_bidders );
 
-	int fd_list[2][2]; 	//list of file desctiptors
-	int pipe1 = PIPE(fd_list[0]); //socket creation with list
-	int pipe2 = PIPE(fd_list[1]); //socket creation with list
+
+
+   	int** fd_list = new int*[number_of_bidders]; // FREE() when we are done!!!
+
+	for(int i = 0; i < number_of_bidders; ++i){
+    	fd_list[i] = new int[2];
+	}
+
+	//^
+	//|
+	//int fd_list[2][2]; 	//list of file desctiptors
+
+
+	int* socket_list = new int[number_of_bidders]; // FREE() when we are done!!!
+
+	for (int i = 0; i < number_of_bidders; ++i)
+	{
+		socket_list[i] = PIPE(fd_list[i]);
+	}
+
+	//int pipe1 = PIPE(fd_list[0]); //socket creation with list
+	//int pipe2 = PIPE(fd_list[1]); //socket creation with list
 
 	
+	pid_t* pid_list = new pid_t[number_of_bidders]; // FREE() when we are done!!!
+
+   	//pid_t pid_list[2];     //lists of child pids 
 
 
-   	pid_t pid_list[2];     //lists of child pids 
-
-	if (pipe1 == 0 && pipe2 == 0 )
+	if (socket_check(socket_list, number_of_bidders) )
 	{
 		printf("Socket Pair is succesfully created.\n");
 
@@ -380,7 +470,7 @@ int main()
 		int child_pid;
 
 
-		for (int i = 0; i < 2; ++i)
+		for (int i = 0; i < number_of_bidders; ++i)
 		{
 			child_pid = fork(); //for parent process to save the child process id in the array pid_list
 
@@ -389,6 +479,34 @@ int main()
 
             	printf("Child Bidder ID: %d \n",i); 
             	printf("Child pid: %d from Parent pid: %d\n",getpid(),getppid()); 
+
+            	int number_of_arguments;
+            	char bidderExecutable[40]; //  40 is the maximum length for the bidderExecutable file name
+    			//char* bidderExecutable = new char;
+
+            	char bidderParameter[40];
+
+            	scanf("%s %d", bidderExecutable, &number_of_arguments);
+
+            	char** args2 = new char*[number_of_arguments+2];
+
+            	args2[0] = bidderExecutable;
+			
+				printf("number_of_arguments: %d \n", number_of_arguments);
+				printf("bidderExecutable:: %s \n", bidderExecutable);
+            	
+            	for (int i = 0; i < number_of_arguments; ++i)
+            	{
+            		scanf("%s", bidderParameter);
+            		args2[i+1] = bidderParameter;
+            		printf("TEST: %s\n", args2[i+1] );
+
+            	}
+            	args2[number_of_arguments+1] = NULL;
+				
+				//args2[0] = "Bidder";
+				//args2[1] = "140";
+				//args2[2] = NULL;
 
 
 				char *args[3];
@@ -415,13 +533,14 @@ int main()
 				printf("STDIN: %d\n", STDIN_FILENO );
 
 				if (fd_list[i][1] != STDOUT_FILENO) { //Redirect standard output to socketpair
+					printf("TEST1\n");
 					if (dup2(fd_list[i][1], STDOUT_FILENO) != STDOUT_FILENO) {
 						perror("Cannot dup2 stdout");
 						exit(0);
 					}
 				}
 
-				execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args);
+				execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args2);
 
 
             	//exit(5); //Should I exit or the bidder program has already exited   
@@ -430,9 +549,9 @@ int main()
         	
 		}
 
-		int status_list[2];
+		int* status_list = new int[number_of_bidders];
 
-		server(fd_list, pid_list, status_list);
+		server(fd_list, pid_list, status_list, number_of_bidders);
 
 		//printf("status_list[0]: %d \n", status_list[0] );
 		//printf("status_list[1]: %d \n", status_list[1] );
@@ -440,7 +559,7 @@ int main()
 		int child_status;
 
 
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < number_of_bidders; i++) {
 			
 			pid_t wPid = waitpid(pid_list[i], &child_status, 0);
 
@@ -461,6 +580,17 @@ int main()
 			//printf("Exit Status: %d\n",w );			
 		} 
 
+		free(pid_list);
+
+		for(int i = 0; i < number_of_bidders; i++)
+		{
+			free(fd_list[i]);
+		}
+		
+		free(fd_list);
+		
+		free(socket_list);
+		
 
 
 

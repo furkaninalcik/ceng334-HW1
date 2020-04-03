@@ -93,7 +93,7 @@ void server(int fd_list[][2], int pid_list[2], int status_list[2])
 		FD_ZERO(&readset);
 		if (open[0]) FD_SET(fd_list[0][0],&readset);
 		if (open[1]) FD_SET(fd_list[1][0],&readset);
-
+		
 
 		/* the following code will block until any of them have data to read */
 		select(m, &readset, NULL,NULL,NULL);  /* no wset, eset, timeout */
@@ -110,8 +110,10 @@ void server(int fd_list[][2], int pid_list[2], int status_list[2])
 
 				r = read(fd_list[i][0], client_message, sizeof(cm));
 				
-				if (r == 0)  	/* EOF */
+				if (r == 0)  {	/* EOF */
+					printf("EOF\n");
 					open[i] = 0;
+				}
 				else{
 
 					if (client_message->message_id == 1)
@@ -232,10 +234,10 @@ void server(int fd_list[][2], int pid_list[2], int status_list[2])
 
 						print_input(input_info, i); // i is the client id assigned to the bidder
 
-						printf("ID::: %d \n" , i);
+						//printf("ID::: %d \n" , i);
 						
 						status_list[i] = client_message->params.status; // STATUS recieved from the client with id -> i
-						//status_list[i] = i+9; // Check if the array is passed by reference
+						//status_list[i] = i*9; // Check if the array is passed by reference
 						
 						bidderCompletionRecord[i] = 1;
 
@@ -382,7 +384,7 @@ int main()
 		{
 			child_pid = fork(); //for parent process to save the child process id in the array pid_list
 
-			if(child_pid == 0) 
+			if((pid_list[i] = child_pid) == 0) 
         	{ 
 
             	printf("Child Bidder ID: %d \n",i); 
@@ -422,10 +424,10 @@ int main()
 				execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args);
 
 
-            	//exit(0); Should I exit or the bidder program has already exited   
+            	//exit(5); //Should I exit or the bidder program has already exited   
         	
         	}
-        	pid_list[i] = child_pid;
+        	
 		}
 
 		int status_list[2];
@@ -443,7 +445,7 @@ int main()
 			pid_t wPid = waitpid(pid_list[i], &child_status, 0);
 
 			if (WIFEXITED(child_status)){
-           		//printf("Child %d terminated with exit status %d\n", wPid, WEXITSTATUS(child_status));
+           		printf("Child %d terminated with exit status %d\n", wPid, WEXITSTATUS(child_status));
     			print_client_finished(i,WEXITSTATUS(child_status),WEXITSTATUS(child_status) == status_list[i]); // status match ???
 
 

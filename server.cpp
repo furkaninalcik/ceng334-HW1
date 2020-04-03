@@ -122,9 +122,9 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 	bi* bid_info = new bi{}; // FREE()!
 	wi* the_winner_info = new wi{}; // FREE()!
 
-	sm* server_message_start  = new sm{};  //TRY NOT TO USE IT
-	sm* server_message_result = new sm{};  // CHANGE ITS NAME
-	sm* server_message_winner = new sm{};  //TRY NOT TO USE IT
+	sm* server_message  = new sm{};  //TRY NOT TO USE IT
+	//sm* server_message = new sm{};  // CHANGE ITS NAME
+	//sm* server_message = new sm{};  //TRY NOT TO USE IT
 
 	cm* client_message = new cm{};
 
@@ -191,13 +191,13 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 						
 
 
-						server_message_start->message_id = SERVER_CONNECTION_ESTABLISHED; // change this to server_message_result  
-						server_message_start->params.start_info = *connection_established_info;
+						server_message->message_id = SERVER_CONNECTION_ESTABLISHED; // change this to server_message  
+						server_message->params.start_info = *connection_established_info;
 
-						write(fd_list[i][0],server_message_start,sizeof(sm));
+						write(fd_list[i][0],server_message,sizeof(sm));
 						print_output(output_info, i); // i is the client id assigned to the bidder
 						
-						printf("server_message_start ID %d\n", server_message_start->message_id );
+						printf("server_message ID %d\n", server_message->message_id );
 						//write(out_fd1[0],"1111",4);
 						//close(fd_list[i][0]);
 
@@ -255,8 +255,8 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 							printf("ERROR !!!!!!!!!!!!!!!!!!!!!!\n");
 						}
 
-						server_message_result->message_id = SERVER_BID_RESULT;
-						server_message_result->params.result_info = *bid_info;
+						server_message->message_id = SERVER_BID_RESULT;
+						server_message->params.result_info = *bid_info;
 						
 
 						output_info->type = SERVER_BID_RESULT;
@@ -267,7 +267,7 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 
 						
 
-						write(fd_list[i][0],server_message_result,sizeof(sm));
+						write(fd_list[i][0],server_message,sizeof(sm));
 						print_output(output_info, i); // i is the client id assigned to the bidder
 
 
@@ -293,8 +293,8 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 							the_winner_info->winning_bid = current_highest_bid;
 
 
-							server_message_winner->message_id = SERVER_AUCTION_FINISHED;
-							server_message_winner->params.winner_info = *the_winner_info;
+							server_message->message_id = SERVER_AUCTION_FINISHED;
+							server_message->params.winner_info = *the_winner_info;
 
 							print_server_finished(current_highest_bidder_id,current_highest_bid);
 							
@@ -306,7 +306,7 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 								//output_info->info.result_info = *bid_info;
 								output_info->info.winner_info = *the_winner_info;
 
-								write(fd_list[i][0],server_message_winner,sizeof(sm));
+								write(fd_list[i][0],server_message,sizeof(sm));
 								print_output(output_info, i); // i is the client id assigned to the bidder
 
 							}

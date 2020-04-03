@@ -62,7 +62,7 @@ int maxFileDescriptor(int** fd_list, int number_of_bidders){
 
 }
 
-void server(int** fd_list, int* pid_list, int* status_list, int number_of_bidders)
+void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, int min_inc, int number_of_bidders)
 {
 	//float open2[2] = {1,1}; /* keep a flag for if pipe is still open */
 
@@ -77,8 +77,8 @@ void server(int** fd_list, int* pid_list, int* status_list, int number_of_bidder
 	
     int current_highest_bid = 0;
     int current_highest_bidder_id ;
-    int min_inc = 5 ;
-    int starting_bid = 0 ;
+    //int min_inc = 5 ;
+    //int starting_bid = 0 ;
 
     int m, r;
 	//int open[2] = {1,1}; /* keep a flag for if pipe is still open */
@@ -367,66 +367,24 @@ int main()
 
     
  	
-  	int input_fds = open("./sample_to_work_on/inp1.txt", O_RDONLY);
+  	int input_fds = open("./sample_to_work_on/inp1.txt", O_RDONLY); // TEST INPUT FILE
 
-    if(dup2(input_fds, STDIN_FILENO) < 0) {
+    if(dup2(input_fds, STDIN_FILENO) < 0) { // INPUT REDIRECTION FOR TESTING
     	printf("ERROR");
     	
   	}
   	
   	scanf("%d %d %d", &starting_bid, &minimum_increment, &number_of_bidders);
-    //scanf("%s %d", bidderExecutable, &number_of_arguments);
  	
  
   	printf("%d , %d , %d\n", starting_bid, minimum_increment , number_of_bidders);
 
 
-  	for (int i = 0; i < number_of_bidders; ++i)
-  	{
-  		//scanf("%s", );
-  	}
-    
-	//////////////////////IO REDIRECTION///////////////////////
 
-
-	char line2[256]; //test
-
-
-	int fd1[2];
-	int fd2[2];
-	int out_fd1[2];
-	int out_fd2[2];
 	
 	//int pipe1 = PIPE(fd1); //socket creation 1
 	//int pipe2 = PIPE(fd2); //socket creation 2
 	
-
-
-
-
-	int file_desc_1 = open("child_1_output.txt",O_WRONLY | O_APPEND); 
-
-	int file_desc_2 = open("child_2_output.txt",O_WRONLY | O_APPEND); 
-
-	int file_desc_test = open("tricky.txt",O_WRONLY | O_APPEND); 
-
-	////////////////////////////////////////
-//	oi* test_output_info = new oi{};
-//	cei* test_connection_established_info = new cei{};
-//	sm* test_server_message = new sm{};
-
-
-	///////////////////////////////////////
-	/*
-	int sockets[2], child;
-   	char buf[1024];
-   	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNIX, sockets) < 0) {
-    	perror("opening stream socket pair");
-    	exit(1);
-   	}
-   	*/
-	////////////////////////////////////////
-	////////////////////////////////////////
 	
 
    	printf("Number of Bidders: %d \n", number_of_bidders );
@@ -466,7 +424,6 @@ int main()
 
 		int w; // parameter for wait()
 
-		int fork_return1, fork_return2;
 		int child_pid;
 
 
@@ -474,7 +431,7 @@ int main()
 		{
 			child_pid = fork(); //for parent process to save the child process id in the array pid_list
 
-			if((pid_list[i] = child_pid) == 0) 
+			if((pid_list[i] = child_pid) == 0)  // CHILD PROCESS
         	{ 
 
             	printf("Child Bidder ID: %d \n",i); 
@@ -482,7 +439,7 @@ int main()
 
             	int number_of_arguments;
             	char bidderExecutable[40]; //  40 is the maximum length for the bidderExecutable file name
-    			//char* bidderExecutable = new char;
+    			                           //char* bidderExecutable = new char;
 
             	char bidderParameter[40];
 
@@ -503,10 +460,6 @@ int main()
 
             	}
             	args2[number_of_arguments+1] = NULL;
-				
-				//args2[0] = "Bidder";
-				//args2[1] = "140";
-				//args2[2] = NULL;
 
 
 				char *args[3];
@@ -540,7 +493,7 @@ int main()
 					}
 				}
 
-				execv("/home/furkan/Desktop/ceng334/HW1/bin/Bidder", args2);
+				execv(bidderExecutable, args2);
 
 
             	//exit(5); //Should I exit or the bidder program has already exited   
@@ -551,7 +504,7 @@ int main()
 
 		int* status_list = new int[number_of_bidders];
 
-		server(fd_list, pid_list, status_list, number_of_bidders);
+		server(fd_list, pid_list, status_list, starting_bid, minimum_increment, number_of_bidders);
 
 		//printf("status_list[0]: %d \n", status_list[0] );
 		//printf("status_list[1]: %d \n", status_list[1] );

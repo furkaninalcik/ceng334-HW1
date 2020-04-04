@@ -13,8 +13,6 @@
 
 extern int errno;
 
-#define DATA1 "In Xanadu, did Kublai Khan..."
-#define DATA2 "A stately pleasure dome decree..."
 
 #define PIPE(fd) socketpair(AF_UNIX, SOCK_STREAM, PF_UNIX, fd)
 
@@ -162,11 +160,11 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 				}
 				else{
 
-					if (client_message->message_id == 1)
+					if (client_message->message_id == CLIENT_CONNECT)
 					{
 						
 						input_info->type = CLIENT_CONNECT;
-						input_info->pid = pid_list[i];//*process_id_1;
+						input_info->pid = pid_list[i];
 						input_info->info = client_message->params;
 						
 						//pid_t pid = getpid(); THIS DOES NOT WORK SINCE 
@@ -183,7 +181,7 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 		
 
 						output_info->type = SERVER_CONNECTION_ESTABLISHED;
-						output_info->pid = pid_list[i];//*process_id_1;
+						output_info->pid = pid_list[i];
 						output_info->info.start_info = *connection_established_info;
 						//output_info->info.result_info = NULL;
 						//output_info->info.winner_info = NULL;
@@ -203,30 +201,21 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 
 
 
-					}else if (client_message->message_id == 2)
+					}else if (client_message->message_id == CLIENT_BID)
 					{
 						//printf("Message received!\n");
 						input_info->type = CLIENT_BID;
-						input_info->pid = pid_list[i];//*process_id_1;
+						input_info->pid = pid_list[i];
 						input_info->info = client_message->params;
 						
 						
 						print_input(input_info, i); // i is the client id assigned to the bidder
 
-
-						if (client_message->params.bid >= current_highest_bid + min_inc ) //BID_ACCEPTED -> 0
-						{
-
-							current_highest_bid = client_message->params.bid;
-							current_highest_bidder_id = i; 					// BIDDER ID -> "i"
-
-							bid_info->result      = BID_ACCEPTED; //BID_ACCEPTED -> 0
-							bid_info->current_bid = current_highest_bid;
-
-							
-
-
-						} else if (client_message->params.bid < starting_bid) //BID_LOWER_THAN_STARTING_BID -> 1
+						/*
+						if (client_message->params.bid >= current_highest_bid + min_inc ) 
+						{}*/
+					
+						if (client_message->params.bid < starting_bid) //BID_LOWER_THAN_STARTING_BID -> 1
 						{
 							//printf("11111111111111111111111111111111\n");
 
@@ -251,8 +240,14 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 							bid_info->current_bid = current_highest_bid;
 
 							
-						} else{
-							printf("ERROR !!!!!!!!!!!!!!!!!!!!!!\n");
+						} else{ //BID_ACCEPTED -> 0
+							
+							current_highest_bid = client_message->params.bid;
+							current_highest_bidder_id = i; 					// BIDDER ID -> "i"
+
+							bid_info->result      = BID_ACCEPTED; //BID_ACCEPTED -> 0
+							bid_info->current_bid = current_highest_bid;
+						
 						}
 
 						server_message->message_id = SERVER_BID_RESULT;
@@ -260,7 +255,7 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 						
 
 						output_info->type = SERVER_BID_RESULT;
-						output_info->pid = pid_list[i];//*process_id_1;
+						output_info->pid = pid_list[i];
 						//output_info->info.start_info = NULL;
 						output_info->info.result_info = *bid_info;
 						//output_info->info.winner_info = NULL;
@@ -272,10 +267,10 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 
 
 
-					} else if (client_message->message_id == 3) // replace with CLIENT_FINISHED!
+					} else if (client_message->message_id == CLIENT_FINISHED) // replace with CLIENT_FINISHED!
 					{
 						input_info->type = CLIENT_FINISHED;
-						input_info->pid = pid_list[i];//*process_id_1;
+						input_info->pid = pid_list[i];
 						input_info->info = client_message->params;
 
 						print_input(input_info, i); // i is the client id assigned to the bidder
@@ -301,9 +296,9 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 							for (int i = 0; i < number_of_bidders; ++i)
 							{
 								output_info->type = SERVER_AUCTION_FINISHED;
-								output_info->pid = pid_list[i];//*process_id_1;
+								output_info->pid = pid_list[i];
 								//output_info->info.start_info = NULL;
-								//output_info->info.result_info = *bid_info;
+								//output_info->info.result_info = NULL;
 								output_info->info.winner_info = *the_winner_info;
 
 								write(fd_list[i][0],server_message,sizeof(sm));
@@ -363,7 +358,7 @@ int main()
     //dup2(file_desc, STDOUT_FILENO) ; //  STDOUT_FILENO = 1
 
 
-    int starting_bid, minimum_increment, number_of_bidders, number_of_arguments;
+    int starting_bid, minimum_increment, number_of_bidders;
 
     
  	
@@ -378,7 +373,6 @@ int main()
  	
  
   	printf("%d , %d , %d\n", starting_bid, minimum_increment , number_of_bidders);
-
 
 
 	
@@ -420,7 +414,7 @@ int main()
 
 	if (socket_check(socket_list, number_of_bidders) )
 	{
-		printf("Socket Pair is succesfully created.\n");
+		printf("Socket Pair is created succesfully.\n");
 
 		int w; // parameter for wait()
 
@@ -445,7 +439,7 @@ int main()
 
             	scanf("%s %d", bidderExecutable, &number_of_arguments);
 
-            	char** args2 = new char*[number_of_arguments+2];
+            	char** args2 = new char*[number_of_arguments+2]; // Because args[0] = ExecutableName and args[number_of_arguments] = NULL
 
             	args2[0] = bidderExecutable;
 			
@@ -459,36 +453,24 @@ int main()
             		printf("TEST: %s\n", args2[i+1] );
 
             	}
-            	args2[number_of_arguments+1] = NULL;
+            	args2[number_of_arguments+1] = NULL; // Null terminated argument list
 
-
-				char *args[3];
-				args[0] = "Bidder";  /* Convention! Not required!! */
-				args[1] = "111";
-				args[2] = NULL;
-
-				if (i == 1)
-				{
-					args[1] = "222";
-				}
 
 				close(fd_list[i][0]);
 				
 		
-
-				if (fd_list[i][1] != STDIN_FILENO) { /*Redirect standard input to socketpair*/
+				//STDIN REDIRECTION
+				if (fd_list[i][1] != STDIN_FILENO) { 
 					if (dup2(fd_list[i][1], STDIN_FILENO) != STDIN_FILENO) {
-						perror("Cannot dup2 stdin");
+						perror("Error in stdin redirection!");
 						exit(0);
 					}
 				}
-				printf("FD1 1: %d\n", fd_list[i][1] );
-				printf("STDIN: %d\n", STDIN_FILENO );
 
-				if (fd_list[i][1] != STDOUT_FILENO) { //Redirect standard output to socketpair
-					printf("TEST1\n");
+				//STDOUT REDIRECTION
+				if (fd_list[i][1] != STDOUT_FILENO) { 
 					if (dup2(fd_list[i][1], STDOUT_FILENO) != STDOUT_FILENO) {
-						perror("Cannot dup2 stdout");
+						perror("Error in stdout redirection!");
 						exit(0);
 					}
 				}
@@ -506,8 +488,6 @@ int main()
 
 		server(fd_list, pid_list, status_list, starting_bid, minimum_increment, number_of_bidders);
 
-		//printf("status_list[0]: %d \n", status_list[0] );
-		//printf("status_list[1]: %d \n", status_list[1] );
 
 		int child_status;
 
@@ -517,8 +497,11 @@ int main()
 			pid_t wPid = waitpid(pid_list[i], &child_status, 0);
 
 			if (WIFEXITED(child_status)){
-           		printf("Child %d terminated with exit status %d\n", wPid, WEXITSTATUS(child_status));
-    			print_client_finished(i,WEXITSTATUS(child_status),WEXITSTATUS(child_status) == status_list[i]); // status match ???
+           		//printf("Child %d terminated with exit status %d\n", wPid, WEXITSTATUS(child_status));
+           		
+           		bool status_match = (WEXITSTATUS(child_status) == status_list[i]);
+
+    			print_client_finished(i,WEXITSTATUS(child_status),status_match); 
 
 
 			}
@@ -527,10 +510,7 @@ int main()
 
         	}
     		
-    		//pid_t childPid = wait(&w); 
-    		//print_client_finished(i,w,1); // status match ???
-			//printf("Child PID: %d\n",wPid );			
-			//printf("Exit Status: %d\n",w );			
+		
 		} 
 
 		free(pid_list);
@@ -548,7 +528,7 @@ int main()
 
 
 	}else{
-		printf("Socket Pair error!.\n");
+		printf("ERROR -> Socket Pair Creation!.\n");
 
 	}
 

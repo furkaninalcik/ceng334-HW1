@@ -351,7 +351,7 @@ int main()
 
     
  	
-  	int input_fds = open("./sample_to_work_on/inp4.txt", O_RDONLY); // TEST INPUT FILE
+  	int input_fds = open("./sample_to_work_on/inp_test1.txt", O_RDONLY); // TEST INPUT FILE
 
     if(dup2(input_fds, STDIN_FILENO) < 0) { // INPUT REDIRECTION FOR TESTING
     	//printf("ERROR");
@@ -412,44 +412,63 @@ int main()
 
 		for (int i = 0; i < number_of_bidders; ++i)
 		{
-	 	   	//printf("Child Bidder ID: %d \n",i); 
-        	//printf("Child pid: %d from Parent pid: %d\n",getpid(),getppid()); 
-
-        	int number_of_arguments;
-        	char bidderExecutable[40]; //  40 is the maximum length for the bidderExecutable file name
-			                           //char* bidderExecutable = new char;
-
-        	scanf("%s %d", bidderExecutable, &number_of_arguments);
-
-           	char** args2 = new char*[number_of_arguments+2]; // Because args[0] = ExecutableName and args[number_of_arguments] = NULL
-           	for (int i = 0; i < number_of_arguments+2; ++i)
-           	{
-           		args2[i] = new char[40];
-           	}
-
-        	args2[0] = bidderExecutable; //Convension
-		
-
-        	
-        	for (int i = 1; i < number_of_arguments+1; ++i)
-        	{
-        		scanf("%s", args2[i]);
-
-        		//args2[i] = bidderParameter;
-        		
-        		printf("Arg %d: %s\n", i , args2[i] );
-
-        	}
-        		//scanf("%s %s %s", args2[1], args2[2], args2[3]);
-
-        	args2[number_of_arguments+1] = NULL; // Null terminated argument list
-        	/////////////////////////////////////////////////////////////////////////////////////
-
 			child_pid = fork(); //for parent process to save the child process id in the array pid_list
 
 			if((pid_list[i] = child_pid) == 0)  // CHILD PROCESS
         	{ 
 
+            	//printf("Child Bidder ID: %d \n",i); 
+            	//printf("Child pid: %d from Parent pid: %d\n",getpid(),getppid()); 
+
+            	int number_of_arguments;
+            	char bidderExecutable[40]; //  40 is the maximum length for the bidderExecutable file name
+    			                           //char* bidderExecutable = new char;
+
+            	char bidderParameter[40];
+
+            	scanf("%s %d", bidderExecutable, &number_of_arguments);
+
+	           	char** args2 = new char*[number_of_arguments+2]; // Because args[0] = ExecutableName and args[number_of_arguments] = NULL
+	           	for (int i = 0; i < number_of_arguments+2; ++i)
+	           	{
+	           		args2[i] = new char[40];
+	           	}
+
+	           	//char args2[number_of_arguments+2][40]; // Because args[0] = ExecutableName and args[number_of_arguments] = NULL
+	           	//String args2[6]; // Because args[0] = ExecutableName and args[number_of_arguments] = NULL
+
+
+
+            	args2[0] = bidderExecutable; //Convension
+			
+				printf("number_of_arguments: %d \n", number_of_arguments);
+				printf("bidderExecutable:: %s \n", args2[0]);
+            	
+            	for (int i = 1; i < number_of_arguments+1; ++i)
+            	{
+            		scanf("%s", args2[i]);
+
+            		//args2[i] = bidderParameter;
+            		
+            		printf("Arg %d: %s\n", i , args2[i] );
+
+            	}
+            		//scanf("%s %s %s", args2[1], args2[2], args2[3]);
+
+            	args2[number_of_arguments+1] = NULL; // Null terminated argument list
+
+            	char* args3[6];
+            	args3[0]= "./PaternBidder";
+            	args3[1]= "100";
+            	args3[2]= "0";
+            	args3[3]= "1";
+            	args3[4]= "2";
+            	args3[5]= NULL;
+
+            	for (int i = 0; i < number_of_arguments+2; ++i)
+            	{
+            		printf("ARG %d : %s\n", i ,args2[i] );
+            	}
 
 				close(fd_list[i][0]);
 				

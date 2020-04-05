@@ -18,8 +18,22 @@ extern int errno;
 #define PIPE(fd) socketpair(AF_UNIX, SOCK_STREAM, PF_UNIX, fd)
 
 //////////////////////////////////////////////////////////////////////////////
-///////////////////////////////onursehitoglu//////////////////////////////////
+///////////////////////////////hocanin codu//////////////////////////////////
+bool socket_check(int*, int);
+bool socket_check(int* socket_list, int number_of_bidders){
 
+	bool result = true;
+
+	for (int i = 0; i < number_of_bidders; ++i)
+	{
+		result = result && (socket_list[i] == 0);
+	}
+
+	return result;
+}
+
+
+bool isAllCompleted(bool*, int);
 bool isAllCompleted(bool completionRecord[], int number_of_bidders){
 	
 	bool result = true;
@@ -33,7 +47,7 @@ bool isAllCompleted(bool completionRecord[], int number_of_bidders){
 
 }
 
-
+bool activeBidders(int*, int);
 bool activeBidders(int* bidderActivityList, int number_of_bidders){
 
 	bool result = false;
@@ -46,7 +60,7 @@ bool activeBidders(int* bidderActivityList, int number_of_bidders){
 	return result;
 
 }
-
+int maxFileDescriptor(int**, int);
 int maxFileDescriptor(int** fd_list, int number_of_bidders){
 
 	int max = 0;
@@ -60,7 +74,7 @@ int maxFileDescriptor(int** fd_list, int number_of_bidders){
 
 
 }
-
+void server(int**, int*, int*, int, int, int );
 void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, int min_inc, int number_of_bidders)
 {
 	//float open2[2] = {1,1}; /* keep a flag for if pipe is still open */
@@ -108,20 +122,21 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 
 	//printf("CONTROL\n");
 
-	ii* input_info = new ii{};  // FREE()!
+	//ii* the_input_info = new ii{};  // FREE()!
 
-	oi* output_info = new oi{}; // FREE()!
+	//oi* the_output_info = new oi{}; // FREE()!
 
 
-	cei* connection_established_info = new cei{}; // FREE()!
-	bi* bid_info = new bi{}; // FREE()!
-	wi* the_winner_info = new wi{}; // FREE()!
+	//cei* the_connection_established_info = new cei{}; // FREE()!
+	//bi* the_bid_info = new bi{}; // FREE()!
+	//wi* the_winner_info = new wi{}; // FREE()!
 
-	sm* server_message  = new sm{};  //TRY NOT TO USE IT
-	//sm* server_message = new sm{};  // CHANGE ITS NAME
-	//sm* server_message = new sm{};  //TRY NOT TO USE IT
+	//sm* the_server_message  = new sm{};  //TRY NOT TO USE IT
+	//sm* the_server_message = new sm{};  // CHANGE ITS NAME
+	//sm* the_server_message = new sm{};  //TRY NOT TO USE IT
 
-	cm* client_message = new cm{};
+	//cm* the_client_message = new cm{};
+	cm the_client_message ;
 
 
 
@@ -149,7 +164,7 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 				
 				//r = read(fd_list[i][0], buf, 8);
 
-				r = read(fd_list[i][0], client_message, sizeof(cm));
+				r = read(fd_list[i][0], &the_client_message, sizeof(cm));
 				
 				if (r == 0)  {	/* EOF */
 					//printf("EOF\n");
@@ -157,124 +172,133 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 				}
 				else{
 
-					if (client_message->message_id == CLIENT_CONNECT)
+					if (the_client_message.message_id == CLIENT_CONNECT)
 					{
-						
-						input_info->type = CLIENT_CONNECT;
-						input_info->pid = pid_list[i];
-						input_info->info = client_message->params;
+						ii the_input_info;
+						the_input_info.type = CLIENT_CONNECT;
+						the_input_info.pid = pid_list[i];
+						the_input_info.info = the_client_message.params;
 						
 						//pid_t pid = getpid(); THIS DOES NOT WORK SINCE 
 											  //THE RETURN VALUE IS THE PROCESS ID OF THE PARENT, NOT THE CHILD
 
 
-						print_input(input_info, i); // i is the client id assigned to the bidder
+						print_input(&the_input_info, i); // i is the client id assigned to the bidder
 						
+						cei the_connection_established_info;
 
-						connection_established_info->client_id = i; 
-						connection_established_info->starting_bid = starting_bid;
-						connection_established_info->current_bid = current_highest_bid;
-						connection_established_info->minimum_increment = min_inc;
+						the_connection_established_info.client_id = i; 
+						the_connection_established_info.starting_bid = starting_bid;
+						the_connection_established_info.current_bid = current_highest_bid;
+						the_connection_established_info.minimum_increment = min_inc;
 		
-
-						output_info->type = SERVER_CONNECTION_ESTABLISHED;
-						output_info->pid = pid_list[i];
-						output_info->info.start_info = *connection_established_info;
-						//output_info->info.result_info = NULL;
-						//output_info->info.winner_info = NULL;
+						oi the_output_info;
+						the_output_info.type = SERVER_CONNECTION_ESTABLISHED;
+						the_output_info.pid = pid_list[i];
+						the_output_info.info.start_info = the_connection_established_info;
+						//the_output_info.info.result_info = NULL;
+						//the_output_info.info.winner_info = NULL;
 
 						
+						sm the_server_message;
 
+						the_server_message.message_id = SERVER_CONNECTION_ESTABLISHED; // change this to the_server_message  
+						the_server_message.params.start_info = the_connection_established_info;
 
-						server_message->message_id = SERVER_CONNECTION_ESTABLISHED; // change this to server_message  
-						server_message->params.start_info = *connection_established_info;
-
-						write(fd_list[i][0],server_message,sizeof(sm));
-						print_output(output_info, i); // i is the client id assigned to the bidder
+						write(fd_list[i][0],&the_server_message,sizeof(sm));
+						print_output(&the_output_info, i); // i is the client id assigned to the bidder
 						
-						//printf("server_message ID %d\n", server_message->message_id );
+						//printf("the_server_message ID %d\n", the_server_message.message_id );
 						//write(out_fd1[0],"1111",4);
 						//close(fd_list[i][0]);
 
 
 
-					}else if (client_message->message_id == CLIENT_BID)
+					}else if (the_client_message.message_id == CLIENT_BID)
 					{
 						//printf("Message received!\n");
-						input_info->type = CLIENT_BID;
-						input_info->pid = pid_list[i];
-						input_info->info = client_message->params;
+						ii the_input_info;
+
+						the_input_info.type = CLIENT_BID;
+						the_input_info.pid = pid_list[i];
+						the_input_info.info = the_client_message.params;
 						
-						
-						print_input(input_info, i); // i is the client id assigned to the bidder
+						//printf("client bid: %d\n", the_client_message.params.bid );
+						print_input(&the_input_info, i); // i is the client id assigned to the bidder
+
+
 
 						/*
-						if (client_message->params.bid >= current_highest_bid + min_inc ) 
+						if (the_client_message.params.bid >= current_highest_bid + min_inc ) 
 						{}*/
 					
-						if (client_message->params.bid < starting_bid) //BID_LOWER_THAN_STARTING_BID -> 1
+						bi the_bid_info;
+					
+						if (the_client_message.params.bid < starting_bid) //BID_LOWER_THAN_STARTING_BID -> 1
 						{
 							//printf("11111111111111111111111111111111\n");
-
-							bid_info->result      = BID_LOWER_THAN_STARTING_BID; //BID_LOWER_THAN_STARTING_BID -> 1
-							bid_info->current_bid = current_highest_bid;
+							the_bid_info.result      = BID_LOWER_THAN_STARTING_BID; //BID_LOWER_THAN_STARTING_BID -> 1
+							the_bid_info.current_bid = current_highest_bid;
 
 							
 
-						} else if (client_message->params.bid < current_highest_bid) //BID_LOWER_THAN_CURRENT -> 2
+						} else if (the_client_message.params.bid < current_highest_bid) //BID_LOWER_THAN_CURRENT -> 2
 						{
 							//printf("22222222222222222222222222222222\n");
 
-							bid_info->result      = BID_LOWER_THAN_CURRENT; //BID_LOWER_THAN_CURRENT -> 2
-							bid_info->current_bid = current_highest_bid;
+							the_bid_info.result      = BID_LOWER_THAN_CURRENT; //BID_LOWER_THAN_CURRENT -> 2
+							the_bid_info.current_bid = current_highest_bid;
 
 							
 
-						} else if (client_message->params.bid - current_highest_bid < min_inc) //BID_INCREMENT_LOWER_THAN_MINIMUM ->3
+						} else if (the_client_message.params.bid - current_highest_bid < min_inc) //BID_INCREMENT_LOWER_THAN_MINIMUM ->3
 						{
 							//printf("33333333333333333333333333333333\n");
-							bid_info->result      = BID_INCREMENT_LOWER_THAN_MINIMUM; //BID_INCREMENT_LOWER_THAN_MINIMUM -> 3
-							bid_info->current_bid = current_highest_bid;
+							the_bid_info.result      = BID_INCREMENT_LOWER_THAN_MINIMUM; //BID_INCREMENT_LOWER_THAN_MINIMUM -> 3
+							the_bid_info.current_bid = current_highest_bid;
 
 							
 						} else{ //BID_ACCEPTED -> 0
 							
-							current_highest_bid = client_message->params.bid;
+							current_highest_bid = the_client_message.params.bid;
 							current_highest_bidder_id = i; 					// BIDDER ID -> "i"
 
-							bid_info->result      = BID_ACCEPTED; //BID_ACCEPTED -> 0
-							bid_info->current_bid = current_highest_bid;
+							the_bid_info.result      = BID_ACCEPTED; //BID_ACCEPTED -> 0
+							the_bid_info.current_bid = current_highest_bid;
 						
 						}
 
-						server_message->message_id = SERVER_BID_RESULT;
-						server_message->params.result_info = *bid_info;
+						sm the_server_message;
+						the_server_message.message_id = SERVER_BID_RESULT;
+						the_server_message.params.result_info = the_bid_info;
+						
+						oi the_output_info;
+						the_output_info.type = SERVER_BID_RESULT;
+						the_output_info.pid = pid_list[i];
+						//the_output_info.info.start_info = NULL;
+						the_output_info.info.result_info = the_bid_info;
+						//the_output_info.info.winner_info = NULL;
+
 						
 
-						output_info->type = SERVER_BID_RESULT;
-						output_info->pid = pid_list[i];
-						//output_info->info.start_info = NULL;
-						output_info->info.result_info = *bid_info;
-						//output_info->info.winner_info = NULL;
-
-						
-
-						write(fd_list[i][0],server_message,sizeof(sm));
-						print_output(output_info, i); // i is the client id assigned to the bidder
+						write(fd_list[i][0],&the_server_message,sizeof(sm));
+						print_output(&the_output_info, i); // i is the client id assigned to the bidder
 
 
 
-					} else if (client_message->message_id == CLIENT_FINISHED) // replace with CLIENT_FINISHED!
+					} else if (the_client_message.message_id == CLIENT_FINISHED) // replace with CLIENT_FINISHED!
 					{
-						input_info->type = CLIENT_FINISHED;
-						input_info->pid = pid_list[i];
-						input_info->info = client_message->params;
+						ii the_input_info;
 
-						print_input(input_info, i); // i is the client id assigned to the bidder
+						the_input_info.type = CLIENT_FINISHED;
+						the_input_info.pid = pid_list[i];
+						the_input_info.info = the_client_message.params;
+
+						print_input(&the_input_info, i); // i is the client id assigned to the bidder
 
 						//printf("ID::: %d \n" , i);
 						
-						status_list[i] = client_message->params.status; // STATUS recieved from the client with id -> i
+						status_list[i] = the_client_message.params.status; // STATUS recieved from the client with id -> i
 						//status_list[i] = i*9; // Check if the array is passed by reference
 						
 						open[i] = 0; //the filedescriptor of the bidder with id "i" will never be checked for reading data
@@ -292,49 +316,42 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 
 
 	}
-
+	delete[] open;
 	//SENDING "SERVER_AUCTION_FINISHED" Message to All the Bidders		
+	wi the_winner_info;
+	the_winner_info.winner_id   = current_highest_bidder_id;
+	the_winner_info.winning_bid = current_highest_bid;
 
-	the_winner_info->winner_id   = current_highest_bidder_id;
-	the_winner_info->winning_bid = current_highest_bid;
-
-
-	server_message->message_id = SERVER_AUCTION_FINISHED;
-	server_message->params.winner_info = *the_winner_info;
+	sm the_server_message;
+	the_server_message.message_id = SERVER_AUCTION_FINISHED;
+	the_server_message.params.winner_info = the_winner_info;
 
 	print_server_finished(current_highest_bidder_id,current_highest_bid);
 	
 	for (int i = 0; i < number_of_bidders; ++i)
 	{
-		output_info->type = SERVER_AUCTION_FINISHED;
-		output_info->pid = pid_list[i];
-		//output_info->info.start_info = NULL;
-		//output_info->info.result_info = NULL;
-		output_info->info.winner_info = *the_winner_info;
+		oi the_output_info;
+		the_output_info.type = SERVER_AUCTION_FINISHED;
+		the_output_info.pid = pid_list[i];
+		//the_output_info.info.start_info = NULL;
+		//the_output_info.info.result_info = NULL;
+		the_output_info.info.winner_info = the_winner_info;
 
-		write(fd_list[i][0],server_message,sizeof(sm));
-		print_output(output_info, i); // i is the client id assigned to the bidder
+		write(fd_list[i][0],&the_server_message,sizeof(sm));
+		print_output(&the_output_info, i); // i is the client id assigned to the bidder
 
 	}
 
 
 
+
+
 }
-///////////////////////////////onursehitoglu//////////////////////////////////
+///////////////////////////////hocanin codu//////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
 
-bool socket_check(int* socket_list, int number_of_bidders){
 
-	bool result = true;
-
-	for (int i = 0; i < number_of_bidders; ++i)
-	{
-		result = result && (socket_list[i] == 0);
-	}
-
-	return result;
-}
 
 int main()
 {
@@ -412,44 +429,62 @@ int main()
 
 		for (int i = 0; i < number_of_bidders; ++i)
 		{
-	 	   	//printf("Child Bidder ID: %d \n",i); 
-        	//printf("Child pid: %d from Parent pid: %d\n",getpid(),getppid()); 
-
-        	int number_of_arguments;
-        	char bidderExecutable[40]; //  40 is the maximum length for the bidderExecutable file name
-			                           //char* bidderExecutable = new char;
-
-        	scanf("%s %d", bidderExecutable, &number_of_arguments);
-
-           	char** args2 = new char*[number_of_arguments+2]; // Because args[0] = ExecutableName and args[number_of_arguments] = NULL
-           	for (int i = 0; i < number_of_arguments+2; ++i)
-           	{
-           		args2[i] = new char[40];
-           	}
-
-        	args2[0] = bidderExecutable; //Convension
-		
-
-        	
-        	for (int i = 1; i < number_of_arguments+1; ++i)
-        	{
-        		scanf("%s", args2[i]);
-
-        		//args2[i] = bidderParameter;
-        		
-        		printf("Arg %d: %s\n", i , args2[i] );
-
-        	}
-        		//scanf("%s %s %s", args2[1], args2[2], args2[3]);
-
-        	args2[number_of_arguments+1] = NULL; // Null terminated argument list
-        	/////////////////////////////////////////////////////////////////////////////////////
-
 			child_pid = fork(); //for parent process to save the child process id in the array pid_list
 
 			if((pid_list[i] = child_pid) == 0)  // CHILD PROCESS
         	{ 
 
+            	//printf("Child Bidder ID: %d \n",i); 
+            	//printf("Child pid: %d from Parent pid: %d\n",getpid(),getppid()); 
+
+            	int number_of_arguments;
+            	char bidderExecutable[40]; //  40 is the maximum length for the bidderExecutable file name
+    			                           //char* bidderExecutable = new char;
+
+            	char bidderParameter[40];
+
+            	scanf("%s %d", bidderExecutable, &number_of_arguments);
+
+	           	char** args = new char*[number_of_arguments+2]; // Because args[0] = ExecutableName and args[number_of_arguments] = NULL
+	           	
+	           	for (int j = 0; j < number_of_arguments+2; ++j)
+	           	{
+	           		args[j] = new char[40];
+	           	}
+
+	           	//char args[number_of_arguments+2][40]; // Because args[0] = ExecutableName and args[number_of_arguments] = NULL
+	           	//String args[6]; // Because args[0] = ExecutableName and args[number_of_arguments] = NULL
+
+
+
+            	args[0] = bidderExecutable; //Convension
+			
+				printf("number_of_arguments: %d \n", number_of_arguments);
+				printf("bidderExecutable:: %s \n", args[0]);
+            	
+            	for (int z = 1; z < number_of_arguments+1; ++z)
+            	{
+            		scanf("%s", args[z]);
+
+            		//args[i] = bidderParameter;
+
+            	}
+            		//scanf("%s %s %s", args[1], args[2], args[3]);
+
+            	args[number_of_arguments+1] = NULL; // Null terminated argument list
+
+            	/*char* args3[6];
+            	args3[0]= "./PaternBidder";
+            	args3[1]= "100";
+            	args3[2]= "0";
+            	args3[3]= "1";
+            	args3[4]= "2";
+            	args3[5]= NULL;
+				*/
+            	for (int t = 0; t < number_of_arguments+2; ++t)
+            	{
+            		printf("ARG %d : %s\n", t ,args[t] );
+            	}
 
 				close(fd_list[i][0]);
 				
@@ -470,8 +505,16 @@ int main()
 					}
 				}
 
-				execv(bidderExecutable, args2);
+				execv(bidderExecutable, args);
 
+				
+				for(int d = 0; d < number_of_arguments+2; d++)
+				{
+					delete[] args[d];
+				}
+				
+				delete[] args;
+				
 
             	//exit(5); //Should I exit or the bidder program has already exited   
         	
@@ -508,16 +551,18 @@ int main()
 		
 		} 
 
-		free(pid_list);
+		delete[] pid_list;
 
 		for(int i = 0; i < number_of_bidders; i++)
 		{
-			free(fd_list[i]);
+			delete[] fd_list[i];
 		}
 		
-		free(fd_list);
+		delete[] fd_list;
 		
-		free(socket_list);
+		delete[] socket_list;
+
+		delete[] status_list;
 		
 
 

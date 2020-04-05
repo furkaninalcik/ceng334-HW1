@@ -351,7 +351,7 @@ int main()
 
     
  	
-  	int input_fds = open("./sample_to_work_on/inp4.txt", O_RDONLY); // TEST INPUT FILE
+  	int input_fds = open("./sample_to_work_on/inp_test1.txt", O_RDONLY); // TEST INPUT FILE
 
     if(dup2(input_fds, STDIN_FILENO) < 0) { // INPUT REDIRECTION FOR TESTING
     	//printf("ERROR");

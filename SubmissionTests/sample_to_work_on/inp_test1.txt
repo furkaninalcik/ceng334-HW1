@@ -1,2 +1,2 @@
 0 5 1
-./PatternBidder 3 100 3 0
+./PatternBidder 7 100 3 0 1 0 3 0

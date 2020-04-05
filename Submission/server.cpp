@@ -7,8 +7,8 @@
 
 #include <errno.h>
 
-#include "lib/message.h"
-#include "lib/logging.h"
+#include "message.h"
+#include "logging.h"
 
 //#include <cstring>
 
@@ -374,7 +374,7 @@ int main()
 
     
  	/*
-  	int input_fds = open("./sample_to_work_on/inp3.txt", O_RDONLY); // TEST INPUT FILE
+  	int input_fds = open("inp5.txt", O_RDONLY); // TEST INPUT FILE
 
     if(dup2(input_fds, STDIN_FILENO) < 0) { // INPUT REDIRECTION FOR TESTING
     	//printf("ERROR");
@@ -383,16 +383,15 @@ int main()
   	scanf("%d %d %d", &starting_bid, &minimum_increment, &number_of_bidders);
  	
 
-   	int** fd_list = new int*[number_of_bidders]; // FREE() when we are done!!!
+   	int** fd_list = new int*[number_of_bidders]; 
 
-	for(int i = 0; i < number_of_bidders; ++i){
+	for(int i = 0; i < number_of_bidders; ++i){  // INITIALIZING THE FILE DESCRIPTORS
     	fd_list[i] = new int[2];
 	}
 
 
 
-
-	int* socket_list = new int[number_of_bidders]; // FREE() when we are done!!!
+	int* socket_list = new int[number_of_bidders]; 
 
 	for (int i = 0; i < number_of_bidders; ++i)
 	{
@@ -401,7 +400,7 @@ int main()
 
 
 	
-	pid_t* pid_list = new pid_t[number_of_bidders]; // FREE() when we are done!!!
+	pid_t* pid_list = new pid_t[number_of_bidders]; 
 
    	//pid_t pid_list[2];     //lists of child pids 
 
@@ -443,14 +442,15 @@ int main()
 			//////////ARGS ARRAY ASSIGNMETNS
 
 		
-			printf("number_of_arguments: %d \n", number_of_arguments);
-			printf("bidderExecutable:: %s \n", args[0]);
+			//printf("number_of_arguments: %d \n", number_of_arguments);
+			//printf("bidderExecutable:: %s \n", args[0]);
 
-
+        	/*
         	for (int t = 0; t < number_of_arguments+2; ++t)
         	{
         		printf("ARG %d : %s\n", t ,args[t] );
         	}
+        	*/
 
 
 
@@ -461,10 +461,7 @@ int main()
 			if((pid_list[i] = child_pid) == 0)  // CHILD PROCESS
         	{ 
 
-            	//printf("Child Bidder ID: %d \n",i); 
-            	//printf("Child pid: %d from Parent pid: %d\n",getpid(),getppid()); 
-
-            	
+          	
 
 				close(fd_list[i][0]);
 				
@@ -491,18 +488,10 @@ int main()
 
 				
 
-				
-
-            	//exit(5); //Should I exit or the bidder program has already exited   
+            	//exit(5); //No need to exit since the bidder program has already exited   
         	
         	}else{
-        		/*delete[] args[0];
-        		delete[] args[1];
-        		delete[] args[2];
-        		delete[] args[3];
-        		delete[] args[4];
-        		delete[] args[5];
-        		*/
+
         		
         		for(int d = 1; d < number_of_arguments+2; d++)
 				{

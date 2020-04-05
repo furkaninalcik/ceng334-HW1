@@ -73,7 +73,7 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 
 	
 	
-    int current_highest_bid = 0;
+    int current_highest_bid = 0; //or starting_bid, but not stated clearly in the pdf
     int current_highest_bidder_id ;
     //int min_inc = 5 ;
     //int starting_bid = 0 ;
@@ -89,12 +89,8 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 
 
 
-
-    bool* bidderCompletionRecord = new bool[number_of_bidders];
-
     for (int i = 0; i < number_of_bidders; ++i)
     {
-    	bidderCompletionRecord[i] = false;
     	open[i] = 1; 
     	close(fd_list[i][1]);
 
@@ -109,7 +105,7 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
     m = maxFileDescriptor(fd_list, number_of_bidders) + 1 ;
 
 
-	printf("CONTROL\n");
+	//printf("CONTROL\n");
 
 	ii* input_info = new ii{};  // FREE()!
 
@@ -155,7 +151,7 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 				r = read(fd_list[i][0], client_message, sizeof(cm));
 				
 				if (r == 0)  {	/* EOF */
-					printf("EOF\n");
+					//printf("EOF\n");
 					open[i] = 0;
 				}
 				else{
@@ -195,7 +191,7 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 						write(fd_list[i][0],server_message,sizeof(sm));
 						print_output(output_info, i); // i is the client id assigned to the bidder
 						
-						printf("server_message ID %d\n", server_message->message_id );
+						//printf("server_message ID %d\n", server_message->message_id );
 						//write(out_fd1[0],"1111",4);
 						//close(fd_list[i][0]);
 
@@ -280,44 +276,10 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 						status_list[i] = client_message->params.status; // STATUS recieved from the client with id -> i
 						//status_list[i] = i*9; // Check if the array is passed by reference
 						
-						bidderCompletionRecord[i] = true;
-
-						if(isAllCompleted(bidderCompletionRecord, number_of_bidders)){
-							
-							the_winner_info->winner_id   = current_highest_bidder_id;
-							the_winner_info->winning_bid = current_highest_bid;
-
-
-							server_message->message_id = SERVER_AUCTION_FINISHED;
-							server_message->params.winner_info = *the_winner_info;
-
-							print_server_finished(current_highest_bidder_id,current_highest_bid);
-							
-							for (int i = 0; i < number_of_bidders; ++i)
-							{
-								output_info->type = SERVER_AUCTION_FINISHED;
-								output_info->pid = pid_list[i];
-								//output_info->info.start_info = NULL;
-								//output_info->info.result_info = NULL;
-								output_info->info.winner_info = *the_winner_info;
-
-								write(fd_list[i][0],server_message,sizeof(sm));
-								print_output(output_info, i); // i is the client id assigned to the bidder
-
-							}
-							free(bidderCompletionRecord);
-
-						}
-
-							
-
-					}
-
-
-
+						open[i] = 0; //the filedescriptor of the bidder with id "i" will never be checked for reading data
 
 						
-
+					}
 
 				}
 
@@ -329,6 +291,32 @@ void server(int** fd_list, int* pid_list, int* status_list, int starting_bid, in
 
 
 	}
+
+	//SENDING "SERVER_AUCTION_FINISHED" Message to All the Bidders		
+
+	the_winner_info->winner_id   = current_highest_bidder_id;
+	the_winner_info->winning_bid = current_highest_bid;
+
+
+	server_message->message_id = SERVER_AUCTION_FINISHED;
+	server_message->params.winner_info = *the_winner_info;
+
+	print_server_finished(current_highest_bidder_id,current_highest_bid);
+	
+	for (int i = 0; i < number_of_bidders; ++i)
+	{
+		output_info->type = SERVER_AUCTION_FINISHED;
+		output_info->pid = pid_list[i];
+		//output_info->info.start_info = NULL;
+		//output_info->info.result_info = NULL;
+		output_info->info.winner_info = *the_winner_info;
+
+		write(fd_list[i][0],server_message,sizeof(sm));
+		print_output(output_info, i); // i is the client id assigned to the bidder
+
+	}
+
+
 
 }
 ///////////////////////////////onursehitoglu//////////////////////////////////
@@ -365,14 +353,14 @@ int main()
   	int input_fds = open("./sample_to_work_on/inp1.txt", O_RDONLY); // TEST INPUT FILE
 
     if(dup2(input_fds, STDIN_FILENO) < 0) { // INPUT REDIRECTION FOR TESTING
-    	printf("ERROR");
+    	//printf("ERROR");
     	
   	}
   	
   	scanf("%d %d %d", &starting_bid, &minimum_increment, &number_of_bidders);
  	
  
-  	printf("%d , %d , %d\n", starting_bid, minimum_increment , number_of_bidders);
+  	//printf("%d , %d , %d\n", starting_bid, minimum_increment , number_of_bidders);
 
 
 	
@@ -381,7 +369,7 @@ int main()
 	
 	
 
-   	printf("Number of Bidders: %d \n", number_of_bidders );
+   	//printf("Number of Bidders: %d \n", number_of_bidders );
 
 
 
@@ -414,7 +402,7 @@ int main()
 
 	if (socket_check(socket_list, number_of_bidders) )
 	{
-		printf("Socket Pair is created succesfully.\n");
+		//printf("Socket Pair is created succesfully.\n");
 
 		int w; // parameter for wait()
 
@@ -428,8 +416,8 @@ int main()
 			if((pid_list[i] = child_pid) == 0)  // CHILD PROCESS
         	{ 
 
-            	printf("Child Bidder ID: %d \n",i); 
-            	printf("Child pid: %d from Parent pid: %d\n",getpid(),getppid()); 
+            	//printf("Child Bidder ID: %d \n",i); 
+            	//printf("Child pid: %d from Parent pid: %d\n",getpid(),getppid()); 
 
             	int number_of_arguments;
             	char bidderExecutable[40]; //  40 is the maximum length for the bidderExecutable file name
@@ -443,14 +431,14 @@ int main()
 
             	args2[0] = bidderExecutable;
 			
-				printf("number_of_arguments: %d \n", number_of_arguments);
-				printf("bidderExecutable:: %s \n", bidderExecutable);
+				//printf("number_of_arguments: %d \n", number_of_arguments);
+				//printf("bidderExecutable:: %s \n", bidderExecutable);
             	
             	for (int i = 0; i < number_of_arguments; ++i)
             	{
             		scanf("%s", bidderParameter);
             		args2[i+1] = bidderParameter;
-            		printf("TEST: %s\n", args2[i+1] );
+            		//printf("TEST: %s\n", args2[i+1] );
 
             	}
             	args2[number_of_arguments+1] = NULL; // Null terminated argument list
@@ -528,7 +516,7 @@ int main()
 
 
 	}else{
-		printf("ERROR -> Socket Pair Creation!.\n");
+		//printf("ERROR -> Socket Pair Creation!.\n");
 
 	}
 
